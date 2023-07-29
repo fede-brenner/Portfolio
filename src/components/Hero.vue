@@ -1,15 +1,15 @@
 <template>
     <section class="h-screen p-0 flex items-center mx-5 md:justify-center">
-        <div class="block md:grid md:grid-flow-col md:grid-cols-2 md:justify-between md:items-center" style="width: 1000px;">
+        <div class="block md:grid md:grid-flow-col md:grid-cols-2 md:justify-between md:items-center md:max-w-[1000px]">
             <div class="left-col">
-                <p id="uphead" class="text-white text-left m-0 text-2xl pl-2 w-100">{{upText}}</p>
+                <p id="uphead" class="text-white text-left m-0 text-1xl pl-1 sm:text-2xl md:pl-2 w-100">{{upText}}</p>
                 <div>
-                    <h1 id="name1" class="text-left text-accent m-0 text-7xl font-normal">{{nombre}}</h1>
-                    <h1 id="name2" class="text-left text-accent m-0 text-7xl -translate-y-2.5 font-normal">{{apellido}}</h1>
+                    <h1 id="name1" class="text-left text-accent m-0 text-5xl sm:text-7xl font-normal">{{nombre}}</h1>
+                    <h1 id="name2" class="text-left text-accent m-0 text-5xl sm:text-7xl -translate-y-2.5 font-normal">{{apellido}}</h1>
                 </div>
                 <div>
-                    <p id="subhead1" class="text-left text-white -translate-y-2.5 text-3xl pl-1 m-0">{{underText1}}</p>
-                    <p id="subhead2" class="text-left text-white -translate-y-2.5 text-3xl pl-1 m-0">{{underText2}}</p>
+                    <p id="subhead1" class="text-left text-white -translate-y-2.5 text-1xl sm:text-3xl md:pl-1 m-0">{{underText1}}</p>
+                    <p id="subhead2" class="text-left text-white -translate-y-2.5 text-1xl sm:text-3xl md:pl-1 m-0">{{underText2}}</p>
                 </div>
 
             </div>
