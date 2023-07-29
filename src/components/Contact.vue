@@ -13,7 +13,7 @@
                     <label for="message" class="block mt-4 mb-2 text-xl">Message</label>
                     <textarea name="message" id="message" cols="30" rows="10" class="pixel-corners w-full box-border bg-gray-800 resize-none text-base outline-none p-3"></textarea>
 
-                    <input type="submit" value="Send message" class="pixel-corners w-full box-border bg-gray-800 resize-none text-base outline-none p-3 hover:bg-gray-700">
+                    <input type="submit" value="Send message" class="pixel-corners mt-3 w-full box-border bg-accent resize-none text-base outline-none p-3 hover:bg-violet-500">
                 </form>
             </div>
             

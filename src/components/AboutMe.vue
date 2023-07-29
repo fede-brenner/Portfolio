@@ -4,9 +4,9 @@
             <div id="about-me-img" class="md:justify-self-end  hidden md:block"></div>
             <div id="about-me-text" class="md:col-span-3">
                 <h2 class="text-4xl my-10 text-left">ABOUT ME</h2>
-                <p class="text-xl text-left">I'm a Full-Stack Developer. Currently studying Computer Systems Engineering at Interamerican Open University(UAI). I love the feeling of compleeting complex proyects and knowing that i learned a lot in the process.</p>
+                <p class="text-base md:text-xl text-left">I'm a Full-Stack Developer. Currently studying Computer Systems Engineering at Interamerican Open University(UAI). I love the feeling of compleeting complex proyects and knowing that i learned a lot in the process.</p>
                 <div id="buttons" class="flex items-center mt-12 gap-12">
-                    <button id="resume-btn" v-on:click="ToggleVisibility()" class="p-3 text-2xl font-bold text-white ml-2 border-none pixel-corners bg-accent">
+                    <button id="resume-btn" v-on:click="ToggleVisibility()" class="p-3 text-1xl md:text-2xl text-white ml-2 border-none pixel-corners bg-accent">
                         RESUME
                     </button>
                     <div class="flex items-center">
