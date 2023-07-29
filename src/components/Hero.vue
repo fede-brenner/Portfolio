@@ -22,7 +22,7 @@
         <transition>
             <div v-if="allVisible" id="mouse" class="-translate-x-2/4 flex items-center justify-center flex-col absolute left-2/4 whitespace-no-wrap before:w-1 before:h-1 before:absolute before:opacity-100" style="bottom: 2%;">
                 <svg xmlns="http://www.w3.org/2000/svg" id="mouse-border" width="40" height="80" viewBox="0 0 65 100"><path fill="#888888" d="M25 0h15v5H25V0ZM15 10V5h10v5H15Zm-5 5v-5h5v5h-5ZM5 25V15h5v10H5Zm0 50H0V25h5v50Zm5 10H5V75h5v10Zm5 5h-5v-5h5v5Zm10 5H15v-5h10v5Zm15 0H25v5h15v-5Zm10-5v5H40v-5h10Zm5-5v5h-5v-5h5Zm5-10v10h-5V75h5Zm0-50h5v50h-5V25Zm-5-10h5v10h-5V15Zm-5-5h5v5h-5v-5Zm0 0V5H40v5h10Z"/></svg>
-                <p class="text-sm m-0 text-gray">scroll down</p>
+                <p class="text-sm m-0 text-grayText">scroll down</p>
             </div>
         </transition>
     </section>
