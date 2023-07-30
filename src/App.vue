@@ -34,7 +34,6 @@ export default {
 <style>
   #app {
     --secondary-color: #888888;
-    --accent-color: #5D42A9;
     --background-color: #131418;
     background: var(--background-color);
     font-family: 'Retro Gaming', Helvetica, Arial, sans-serif;
