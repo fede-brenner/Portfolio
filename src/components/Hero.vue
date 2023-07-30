@@ -1,6 +1,6 @@
 <template>
     <section class="h-screen p-0 flex items-center mx-5 md:justify-center">
-        <div class="block md:grid md:grid-flow-col md:grid-cols-2 md:justify-between md:items-center md:max-w-[1000px]">
+        <div class="block w-[90vw] md:grid md:grid-flow-col md:grid-cols-2 md:justify-between md:items-center md:max-w-[1280px]">
             <div class="left-col">
                 <p id="uphead" class="text-white text-left m-0 text-1xl pl-1 sm:text-2xl md:pl-2 w-100">{{upText}}</p>
                 <div>

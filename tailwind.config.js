@@ -11,9 +11,6 @@ module.exports = {
         grayText: '#888888',
 
       },
-      width: {
-        'navBar': '98vw',
-      },
     },
   },
   plugins: [],

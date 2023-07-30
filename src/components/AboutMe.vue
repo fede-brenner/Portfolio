@@ -1,6 +1,6 @@
 <template>
-    <section id="about-me" class="p-0 flex items-center my-40 mx-8 text-white">
-        <div id="container" class="md:grid md:grid-flow-col md:justify-between md:items-center md:gap-12 md:grid-cols-4" style="width: 1050px;">
+    <section id="about-me" class="p-0 md:pr-[10vw] flex items-center my-40 mx-8 text-white">
+        <div id="container" class="w-full md:grid md:grid-flow-col md:justify-between md:items-center md:gap-12 md:grid-cols-4">
             <div id="about-me-img" class="md:justify-self-end  hidden md:block"></div>
             <div id="about-me-text" class="md:col-span-3">
                 <h2 class="text-4xl my-10 text-left">ABOUT ME</h2>
@@ -35,37 +35,37 @@
                     <div class="relative overflow-y-auto p-4 overscroll-auto">
                         <h2 class="text-2xl p-2 text-left">Work Experience:</h2>
                         <div id="work-experience" class="p-5 text-gray-100">
-                            <div class="pl-[15px] pb-[5px]">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="5" height="40" fill="none" viewBox="0 0 5 40"><path fill="#D9D9D9" fill-rule="evenodd" d="M5 0H0v5h5V0ZM0 10h5v10H0V10Zm0 15h5v15H0V25Z" clip-rule="evenodd"/></svg>
+                            <div class="pl-[15px] pb-[5px] hidden md:block">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="5" fill="none" viewBox="0 0 5 40"><path fill="#D9D9D9" fill-rule="evenodd" d="M5 0H0v5h5V0ZM0 10h5v10H0V10Zm0 15h5v15H0V25Z" clip-rule="evenodd"/></svg>
                             </div>
-                            <div v-for="(job, index) of jobs" :key="index"  id="job" class="flex flex-row items-center">
-                                <svg id="bullet-point" xmlns="http://www.w3.org/2000/svg" width="35" height="185" fill="none" viewBox="0 0 35 185"><path fill="#D9D9D9" fill-rule="evenodd" d="M15 0h5v75h5v5H10v-5h5V0ZM5 85v-5h5v5H5Zm0 15H0V85h5v15Zm5 5H5v-5h5v5Zm15 0v5h-5v75h-5v-75h-5v-5h15Zm5-5v5h-5v-5h5Zm0-15h5v15h-5V85Zm0 0v-5h-5v5h5Zm-10 5v5h-5v-5h5Z" clip-rule="evenodd"/></svg>
-                                <div id="job-details" class="flex flex-col justify-start pl-5 text-left w-[80vw]">
-                                    <h2 class="text-xl">{{ job.Title }}</h2>
-                                    <h3 class="text-grayText">{{ job.Company }}</h3>
-                                    <p class="text-grayText">{{ job.Start + " - " + job.Finish }}</p>
-                                    <p>{{ job.Description }}</p>
+                            <div v-for="(job, index) of jobs" :key="index"  id="job" class="list-item ml-5 md:ml-0 md:flex flex-row items-center">
+                                <svg class="hidden md:block" id="bullet-point" xmlns="http://www.w3.org/2000/svg" width="35" fill="none" viewBox="0 0 35 185"><path fill="#D9D9D9" fill-rule="evenodd" d="M15 0h5v75h5v5H10v-5h5V0ZM5 85v-5h5v5H5Zm0 15H0V85h5v15Zm5 5H5v-5h5v5Zm15 0v5h-5v75h-5v-75h-5v-5h15Zm5-5v5h-5v-5h5Zm0-15h5v15h-5V85Zm0 0v-5h-5v5h5Zm-10 5v5h-5v-5h5Z" clip-rule="evenodd"/></svg>
+                                <div id="job-details" class="flex flex-col justify-start md:pl-5 text-left w-[80vw]">
+                                    <h2 class="text-base md:text-xl">{{ job.Title }}</h2>
+                                    <h3 class="text-xs md:text-base text-grayText">{{ job.Company }}</h3>
+                                    <p class="text-xs md:text-base text-grayText">{{ job.Start + " - " + job.Finish }}</p>
+                                    <p class="text-xs md:text-base w-full">{{ job.Description }}</p>
                                 </div>
                             </div>
-                            <div class="pl-[15px] pt-[5px]">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="5" height="40" fill="none" viewBox="0 0 5 40"><path fill="#D9D9D9" fill-rule="evenodd" d="M5 15H0V0h5v15Zm0 15H0V20h5v10ZM0 40h5v-5H0v5Z" clip-rule="evenodd"/></svg>
+                            <div class="pl-[15px] pt-[5px] hidden md:block">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="5" fill="none" viewBox="0 0 5 40"><path fill="#D9D9D9" fill-rule="evenodd" d="M5 15H0V0h5v15Zm0 15H0V20h5v10ZM0 40h5v-5H0v5Z" clip-rule="evenodd"/></svg>
                             </div>
                         </div>
                         <h2 class="text-2xl p-2 pt-12 text-left">Education:</h2>
                         <div id="education" class="p-5 text-gray-100">
-                            <div class="pl-[15px] pb-[5px]">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="5" height="40" fill="none" viewBox="0 0 5 40"><path fill="#D9D9D9" fill-rule="evenodd" d="M5 0H0v5h5V0ZM0 10h5v10H0V10Zm0 15h5v15H0V25Z" clip-rule="evenodd"/></svg>
+                            <div class="pl-[15px] pb-[5px] hidden md:block">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="5" fill="none" viewBox="0 0 5 40"><path fill="#D9D9D9" fill-rule="evenodd" d="M5 0H0v5h5V0ZM0 10h5v10H0V10Zm0 15h5v15H0V25Z" clip-rule="evenodd"/></svg>
                             </div>
-                            <div v-for="(degree, index) of degrees" :key="index"  id="degree" class="flex flex-row items-center">
-                                <svg id="bullet-point" xmlns="http://www.w3.org/2000/svg" width="35" height="185" fill="none" viewBox="0 0 35 185"><path fill="#D9D9D9" fill-rule="evenodd" d="M15 0h5v75h5v5H10v-5h5V0ZM5 85v-5h5v5H5Zm0 15H0V85h5v15Zm5 5H5v-5h5v5Zm15 0v5h-5v75h-5v-75h-5v-5h15Zm5-5v5h-5v-5h5Zm0-15h5v15h-5V85Zm0 0v-5h-5v5h5Zm-10 5v5h-5v-5h5Z" clip-rule="evenodd"/></svg>
-                                <div id="degree-details" class="flex flex-col justify-start pl-5 text-left w-[80vw]">
-                                    <h2 class="text-xl">{{ degree.Title }}</h2>
-                                    <h3 class="text-grayText">{{ degree.Institucion }}</h3>
-                                    <p class="text-grayText">{{ degree.Start + " - " + degree.Finish }}</p>
+                            <div v-for="(degree, index) of degrees" :key="index"  id="degree" class="list-item ml-5 md:ml-0 md:flex flex-row items-center">
+                                <svg class="hidden md:block" id="bullet-point" xmlns="http://www.w3.org/2000/svg" width="35" fill="none" viewBox="0 0 35 185"><path fill="#D9D9D9" fill-rule="evenodd" d="M15 0h5v75h5v5H10v-5h5V0ZM5 85v-5h5v5H5Zm0 15H0V85h5v15Zm5 5H5v-5h5v5Zm15 0v5h-5v75h-5v-75h-5v-5h15Zm5-5v5h-5v-5h5Zm0-15h5v15h-5V85Zm0 0v-5h-5v5h5Zm-10 5v5h-5v-5h5Z" clip-rule="evenodd"/></svg>
+                                <div id="degree-details" class="flex flex-col justify-start md:pl-5 text-left w-[80vw]">
+                                    <h2 class="text-base md:text-xl">{{ degree.Title }}</h2>
+                                    <h3 class="text-xs md:text-base text-grayText">{{ degree.Institucion }}</h3>
+                                    <p class="text-xs md:text-base text-grayText">{{ degree.Start + " - " + degree.Finish }}</p>
                                 </div>
                             </div>
-                            <div class="pl-[15px] pt-[5px]">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="5" height="40" fill="none" viewBox="0 0 5 40"><path fill="#D9D9D9" fill-rule="evenodd" d="M5 15H0V0h5v15Zm0 15H0V20h5v10ZM0 40h5v-5H0v5Z" clip-rule="evenodd"/></svg>
+                            <div class="pl-[15px] pt-[5px] hidden md:block">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="5" fill="none" viewBox="0 0 5 40"><path fill="#D9D9D9" fill-rule="evenodd" d="M5 15H0V0h5v15Zm0 15H0V20h5v10ZM0 40h5v-5H0v5Z" clip-rule="evenodd"/></svg>
                             </div>
                         </div>
                         <h2 class="text-2xl p-2 pt-12 text-left">Certificates:</h2>

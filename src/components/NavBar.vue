@@ -1,7 +1,7 @@
 <template>
   <transition>
-    <nav v-if="allVisible" class="max-w-screen-xm overflow-x-hidden absolute flex flex-wrap items-center justify-between py-3 mb-3 w-navBar">
-        <div class="w-full px-4 mx-1 flex flex-wrap items-center justify-between">
+    <nav v-if="allVisible" class="overflow-x-hidden absolute flex flex-wrap items-center justify-between py-3 mb-3 w-full">
+        <div class="w-full px-4 mx-1 flex flex-wrap items-center justify-between md:max-w-[1480px]">
             <div class="w-full relative flex justify-between lg:w-auto lg:static lg:block lg:justify-start">
                 <a class="text-lg font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase text-white" href="#">
                 <!--FEDE BRENNER-->
