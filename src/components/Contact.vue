@@ -3,20 +3,21 @@
         <div class="m-0">
             <h3 class="py-10 text-4xl text-left md:pl-[10vw]">CONTACT</h3>
             <div class="flex items-center justify-center">
-                <form action="https://formsubmit.co/fedebrenner@gmail.com" method="POST">
+                <form action="https://formsubmit.co/e2815e4dadd171a7699fe6a439e6534a" method="POST">
+                    <input type="hidden" name="_next" value="http://fedebrenner.com/#contact">
+                    <input type="hidden" name="_captcha" value="false">
                     <input type="hidden" name="_subject" value="Nuevo mensaje del Portfolio!">
-                    <input type="hidden" name="_next" value="https://fedebrenner.com/#Contact">
 
                     <label for="name" class="block mt-4 mb-2 text-xl">Name</label>
-                    <input type="text" id="name" name="name" required class="pixel-corners w-full box-border bg-gray-800 resize-none text-base outline-none p-3">
+                    <input type="text" name="name" required class="pixel-corners w-full box-border bg-gray-800 resize-none text-base outline-none p-3">
 
                     <label for="email" class="block mt-4 mb-2 text-xl">Email</label>
-                    <input type="email" id="email" name="email" required class="pixel-corners w-full box-border bg-gray-800 resize-none text-base outline-none p-3">
+                    <input type="email" name="email" required class="pixel-corners w-full box-border bg-gray-800 resize-none text-base outline-none p-3">
 
                     <label for="message" class="block mt-4 mb-2 text-xl">Message</label>
-                    <textarea name="message" id="message" cols="30" rows="10" required class="pixel-corners w-full box-border bg-gray-800 resize-none text-base outline-none p-3"></textarea>
+                    <textarea name="message" cols="30" rows="10" required class="pixel-corners w-full box-border bg-gray-800 resize-none text-base outline-none p-3"></textarea>
 
-                    <input type="submit" value="Send message" class="pixel-corners mt-3 w-full box-border bg-accent-600 resize-none text-base outline-none p-3 hover:bg-violet-500">
+                    <button type="submit" class="pixel-corners mt-3 w-full box-border bg-accent-600 resize-none text-base outline-none p-3 hover:bg-violet-500">Send</button>
                 </form>
             </div>
         </div>
