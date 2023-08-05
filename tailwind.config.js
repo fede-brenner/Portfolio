@@ -19,6 +19,10 @@ module.exports = {
         'grayText': '#888888',
 
       },
+      gridTemplateColumns: {
+        '16': 'repeat(16, 50px)',
+        '16-2': 'repeat(16, 25px)',
+      },
     },
   },
   plugins: [],

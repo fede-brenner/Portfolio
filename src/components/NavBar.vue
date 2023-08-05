@@ -58,7 +58,7 @@ export default {
     mounted() {
     setTimeout(() => {
       this.allVisible = true;
-    }, 3800); // 5000 milliseconds = 5 seconds
+    }, 2100); // 5000 milliseconds = 5 seconds
   },
 }
 </script>

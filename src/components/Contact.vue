@@ -5,7 +5,6 @@
             <div class="flex items-center justify-center">
                 <form action="https://formsubmit.co/e2815e4dadd171a7699fe6a439e6534a" method="POST">
                     <input type="hidden" name="_next" value="http://fedebrenner.com/#contact">
-                    <input type="hidden" name="_captcha" value="false">
                     <input type="hidden" name="_subject" value="Nuevo mensaje del Portfolio!">
 
                     <label for="name" class="block mt-4 mb-2 text-xl">Name</label>

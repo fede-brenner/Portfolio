@@ -64,7 +64,7 @@ export default {
             if(i<upheadText.length){
                 this.upText += '_';
             }
-            setTimeout(this.typing,50);
+            setTimeout(this.typing,25);
         }else if(s<nameText1.length){
             this.nombre = this.nombre.slice(0,-1);
             this.nombre += nameText1.charAt(s);
@@ -72,7 +72,7 @@ export default {
             if(s<nameText1.length){
                 this.nombre += '_';
             }
-            setTimeout(this.typing,80);
+            setTimeout(this.typing,60);
         }else if(l<nameText2.length){
             this.apellido = this.apellido.slice(0,-1);
             this.apellido += nameText2.charAt(l);
@@ -80,7 +80,7 @@ export default {
             if(l<nameText2.length){
                 this.apellido += '_';
             }
-            setTimeout(this.typing,80);
+            setTimeout(this.typing,60);
         }else if(n<subheadText1.length){
             this.underText1 = this.underText1.slice(0,-1);
             this.underText1 += subheadText1.charAt(n);
@@ -88,13 +88,13 @@ export default {
             if(n<subheadText1.length){
                 this.underText1 += '_';
             }
-            setTimeout(this.typing,60);
+            setTimeout(this.typing,30);
         }else if(m<subheadText2.length){
             this.underText2 = this.underText2.slice(0,-1);
             this.underText2 += subheadText2.charAt(m);
             this.underText2 += '_';
             m++;
-            setTimeout(this.typing,60);
+            setTimeout(this.typing,30);
         }else{
             if(this.underText2.charAt(m)=="_"){
                 this.underText2 = this.underText2.slice(0,-1);
@@ -109,7 +109,7 @@ export default {
     this.typing(),
     setTimeout(() => {
       this.allVisible = true;
-    }, 3800); // 5000 milliseconds = 5 seconds
+    }, 2100);
   },
 }
 

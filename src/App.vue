@@ -2,6 +2,7 @@
   <NavBar/>
   <Hero/>
   <AboutMe/>
+  <Skills/>
   <Proyects/>
   <Contact/>
   <SimpleFooter/>
@@ -12,6 +13,7 @@
 import NavBar from './components/NavBar.vue'
 import Hero from './components/Hero.vue'
 import AboutMe from './components/AboutMe.vue'
+import Skills from './components/Skills.vue'
 import Proyects from './components/Proyects.vue'
 import Contact from './components/Contact.vue'
 import SimpleFooter from './components/SimpleFooter.vue'
@@ -24,6 +26,7 @@ export default {
     NavBar,
     Hero,
     AboutMe,
+    Skills,
     Proyects,
     Contact,
     SimpleFooter
