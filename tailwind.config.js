@@ -23,7 +23,7 @@ module.exports = {
             '18': 'repeat(18, 50px)',
             '16': 'repeat(16, 50px)',
             '14': 'repeat(14, 50px)',
-            '14-2': 'repeat(14, 25px)',
+            '14-2': 'repeat(14, 30px)',
         },
         },
     },
