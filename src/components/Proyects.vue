@@ -1,7 +1,7 @@
 <template>
-    <section id="proyects" class="p-8 text-white">
-        <div id="container" class="m-0">
-            <h2 class="py-10 text-4xl text-left md:pl-[10vw]">PROYECTS</h2>
+    <section id="proyects" class="flex flex-col items-center p-8 text-white">
+        <div id="container" class="m-0 w-full md:max-w-[1080px]">
+            <h2 class="py-10 text-4xl text-left">PROYECTS</h2>
             <div class="m-0 flex items-center justify-center">
                 <ul class="grid items-center justify-center m-0 gap-12 grid-cols-1 md:grid-cols-2 md:w-[75vw] md:max-w-[875px]">
                     <li v-for="(proyect, index) of proyects" :key="index" class="pixel-corners w-[80vw] bg-gray-800 text-left h-48 transition-transform duration-500 ease-in-out hover:scale-105 md:text-left md:w-[35vw] md:max-w-[400px]" id="card">

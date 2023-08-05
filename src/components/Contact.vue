@@ -1,7 +1,7 @@
 <template>
-    <section id="contact" class="p-8 text-white my-12">
-        <div class="m-0">
-            <h3 class="py-10 text-4xl text-left md:pl-[10vw]">CONTACT</h3>
+    <section id="contact" class="flex flex-col items-center p-8 text-white my-12">
+        <div class="m-0 w-full md:max-w-[1080px]">
+            <h3 class="py-10 text-4xl text-left">CONTACT</h3>
             <div class="flex items-center justify-center">
                 <form action="https://formsubmit.co/e2815e4dadd171a7699fe6a439e6534a" method="POST">
                     <input type="hidden" name="_next" value="http://fedebrenner.com/#contact">
