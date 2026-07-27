@@ -2,11 +2,557 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @font-face {
-    font-family: 'Retro Gaming';
-    src: url('./retro_gaming-webfont.woff2') format('woff2'),
-         url('./retro_gaming-webfont.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
+  font-family: 'Retro Gaming';
+  src: url('./assets/fonts/retro_gaming-webfont.woff2') format('woff2'),
+       url('./assets/fonts/retro_gaming-webfont.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Mismo clip-path "esquinas pixeladas" que ya usan RESUME (AboutMe.vue), las
+   cards de Proyects.vue y los inputs de Contact.vue en el sitio público,
+   pero acá global para poder reusarlo en los botones/inputs del panel. */
+.pixel-corners {
+  clip-path: polygon(
+    0px calc(100% - 10px),
+    5px calc(100% - 10px),
+    5px calc(100% - 5px),
+    10px calc(100% - 5px),
+    10px 100%,
+    calc(100% - 10px) 100%,
+    calc(100% - 10px) calc(100% - 5px),
+    calc(100% - 5px) calc(100% - 5px),
+    calc(100% - 5px) calc(100% - 10px),
+    100% calc(100% - 10px),
+    100% 10px,
+    calc(100% - 5px) 10px,
+    calc(100% - 5px) 5px,
+    calc(100% - 10px) 5px,
+    calc(100% - 10px) 0px,
+    10px 0px,
+    10px 5px,
+    5px 5px,
+    5px 10px,
+    0px 10px
+  );
+  /* box-shadow queda recortado por el clip-path (el clip aplica a toda la
+     pintura del elemento, sombra incluida), por eso se usa drop-shadow: es
+     un filtro que se calcula sobre la silueta ya recortada. Offset en 0 y
+     todo el efecto en el blur para que la sombra rodee el objeto parejo por
+     los 4 lados, en vez de solo verse hacia abajo/derecha. */
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Misma forma que .pixel-corners pero con muescas más chicas (3px/6px en vez
+   de 5px/10px), para botones/inputs chicos donde el notch grande se ve
+   desproporcionado. */
+.pixel-corners-sm {
+  clip-path: polygon(
+    0px calc(100% - 6px),
+    3px calc(100% - 6px),
+    3px calc(100% - 3px),
+    6px calc(100% - 3px),
+    6px 100%,
+    calc(100% - 6px) 100%,
+    calc(100% - 6px) calc(100% - 3px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 3px) calc(100% - 6px),
+    100% calc(100% - 6px),
+    100% 6px,
+    calc(100% - 3px) 6px,
+    calc(100% - 3px) 3px,
+    calc(100% - 6px) 3px,
+    calc(100% - 6px) 0px,
+    6px 0px,
+    6px 3px,
+    3px 3px,
+    3px 6px,
+    0px 6px
+  );
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.6));
+}
+
+/* Para elementos "fantasma" (sin fondo propio, solo hover:bg-*) como el
+   trigger de usuario o los items del menú en PanelView.vue: sin fondo
+   sólido, drop-shadow termina abrazando el texto/imagen de adentro en vez
+   del contorno del botón, así que se apaga por defecto y solo se prende
+   junto con el fondo, al hacer hover. */
+.pixel-corners.shadow-on-hover,
+.pixel-corners-sm.shadow-on-hover {
+  filter: none;
+}
+
+.pixel-corners.shadow-on-hover:hover {
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
+}
+
+.pixel-corners-sm.shadow-on-hover:hover {
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.6));
+}
+
+/* Barra de scroll pixelada para pantallas chicas donde el panel necesita
+   scroll si o si. Chrome/Edge/Safari via ::-webkit-scrollbar*; Firefox no
+   soporta el rayado, por eso tiene su propio fallback más simple abajo. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #131418;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #5D42A9;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.18) 0px,
+    rgba(255, 255, 255, 0.18) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  border: 2px solid #131418;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #8B6FD6;
+}
+
+::-webkit-scrollbar-corner {
+  background: #131418;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #5D42A9 #131418;
+}
+
+/* Tema claro del panel privado (/panel). Sobreescribe los mismos hex fijos
+   que usan todos los componentes del panel (bg-[#131418], bg-[#1c1d22],
+   text-[#888888], etc.) en vez de reescribir cada componente uno por uno,
+   ya que ese puñado de colores se repite consistentemente en todo el panel. */
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* Sombra de .pixel-corners/-sm más liviana en claro: el mismo rgba(0,0,0,.45)
+   del tema oscuro se ve demasiado pesado contra el fondo crema, que ya tiene
+   bastante contraste de por sí con solo un poco de opacidad. */
+/* En claro la card y el fondo son dos tonos de crema casi idénticos, así que
+   una sola sombra difusa no alcanza para que se note el borde: se apilan dos
+   drop-shadow con offset 0 (todo el efecto va en el blur) para que se vea
+   parejo en los 4 lados en vez de solo abajo/derecha — una pegada al borde
+   para el contorno y otra más ancha detrás para dar profundidad. */
+[data-theme='light'] .pixel-corners {
+  filter:
+    drop-shadow(0 0 1px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 3px rgba(0, 0, 0, 0.3))
+    !important;
+}
+
+[data-theme='light'] .pixel-corners-sm {
+  filter:
+    drop-shadow(0 0 1px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 2px rgba(0, 0, 0, 0.3))
+    !important;
+}
+
+/* Mismo apagado-hasta-hover que arriba, pero para el tema claro (los
+   overrides de arriba llevan !important y matchean igual aunque el elemento
+   tenga la clase shadow-on-hover de más, así que hay que apagarlos acá con
+   la misma especificidad). */
+[data-theme='light'] .pixel-corners.shadow-on-hover,
+[data-theme='light'] .pixel-corners-sm.shadow-on-hover {
+  filter: none !important;
+}
+
+[data-theme='light'] .pixel-corners.shadow-on-hover:hover {
+  filter:
+    drop-shadow(0 0 1px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 3px rgba(0, 0, 0, 0.3))
+    !important;
+}
+
+[data-theme='light'] .pixel-corners-sm.shadow-on-hover:hover {
+  filter:
+    drop-shadow(0 0 1px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 2px rgba(0, 0, 0, 0.3))
+    !important;
+}
+
+[data-theme='light'] .bg-\[\#131418\] {
+  background-color: #f0ebe0 !important;
+}
+
+[data-theme='light'] .bg-\[\#1c1d22\] {
+  background-color: #faf6ec !important;
+}
+
+[data-theme='light'] .text-white {
+  color: #16171c !important;
+}
+
+[data-theme='light'] .text-\[\#888888\] {
+  color: #5a5a63 !important;
+}
+
+[data-theme='light'] .border-\[\#2a2b31\] {
+  border-color: #dedee3 !important;
+}
+
+[data-theme='light'] .hover\:bg-\[\#1c1d22\]:hover {
+  background-color: #ece4d4 !important;
+}
+
+[data-theme='light'] .bg-\[\#2a2b31\] {
+  background-color: #dedee3 !important;
+}
+
+[data-theme='light'] .hover\:bg-\[\#2a2b31\]:hover {
+  background-color: #ece4d4 !important;
+}
+
+[data-theme='light'] .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Accent violeta del tema claro: mismo rol que #5D42A9/#8B6FD6 en el tema
+   oscuro, pero mas claro para combinar con el fondo crema en vez del violeta
+   oscuro (pensado para contrastar contra el gris casi negro original). */
+[data-theme='light'] .bg-\[\#5D42A9\] {
+  background-color: #9379CC !important;
+}
+
+[data-theme='light'] .border-\[\#5D42A9\] {
+  border-color: #9379CC !important;
+}
+
+[data-theme='light'] .hover\:bg-\[\#5D42A9\]:hover {
+  background-color: #9379CC !important;
+}
+
+[data-theme='light'] .focus-within\:bg-\[\#5D42A9\]:focus-within {
+  background-color: #9379CC !important;
+}
+
+[data-theme='light'] .hover\:bg-\[\#8B6FD6\]:hover {
+  background-color: #9379CC !important;
+}
+
+[data-theme='light'] .bg-\[\#5D42A9\]\/20 {
+  background-color: rgba(147, 121, 204, 0.2) !important;
+}
+
+[data-theme='light'] .text-\[\#8B6FD6\] {
+  color: #9379CC !important;
+}
+
+[data-theme='light'] .hover\:text-\[\#8B6FD6\]:hover {
+  color: #9379CC !important;
+}
+
+/* El toggle (ver ToggleSwitch.vue) tiene su propio fill violeta hardcodeado
+   en <style scoped>, no una utility de Tailwind — necesita su propio
+   override + !important por el mismo motivo que pixel-tab-- / filter-chip
+   de más abajo. */
+[data-theme='light'] .toggle-track-outer {
+  fill: #9379CC !important;
+}
+
+[data-theme='light'] .toggle-track-inner:not(.on) {
+  fill: #f0ebe0 !important;
+}
+
+[data-theme='light'] .toggle-track-inner.on {
+  fill: #9379CC !important;
+}
+
+/* Circulo del knob más oscuro en tema claro: blanco puro se pierde contra el
+   fondo crema del track cuando está apagado. */
+[data-theme='light'] .toggle-knob-fill {
+  fill: #16171c !important;
+}
+
+/* Los selectores de acá para abajo (pixel-tab--*, filter-chip*) apuntan a
+   clases definidas en <style scoped> de cada componente, no a utilities de
+   Tailwind. El selector compilado de Vue (.clase[data-v-hash]) empata en
+   especificidad con este override ([data-theme='light'] .clase), asi que sin
+   !important el orden de inserción en el bundle decide y a veces pierde el
+   override — por eso todos estos sí necesitan !important. */
+[data-theme='light'] .pixel-tab--boxed {
+  background: #faf6ec !important;
+  color: #16171c !important;
+  border-color: #9379CC !important;
+  box-shadow: 4px 4px 0 #9379CC !important;
+}
+
+[data-theme='light'] .pixel-tab--boxed:hover {
+  background: #ece4d4 !important;
+}
+
+[data-theme='light'] .pixel-tab--boxed.active {
+  background: #9379CC !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+[data-theme='light'] .pixel-tab--underline {
+  color: #5a5a63 !important;
+}
+
+[data-theme='light'] .pixel-tab--underline:hover,
+[data-theme='light'] .pixel-tab--underline.active {
+  color: #16171c !important;
+}
+
+[data-theme='light'] .pixel-tab--underline.active::after {
+  background: #9379CC !important;
+}
+
+[data-theme='light'] .filter-chip {
+  background: #faf6ec !important;
+  color: #16171c !important;
+  border-color: #dedee3 !important;
+}
+
+[data-theme='light'] .filter-chip:hover {
+  border-color: #9379CC !important;
+}
+
+[data-theme='light'] .filter-chip.active {
+  background: #9379CC !important;
+  border-color: #9379CC !important;
+  color: #ffffff !important;
+}
+
+[data-theme='light'] .filter-chip-border {
+  background: #f0ebe0 !important;
+}
+
+[data-theme='light'] .filter-chip-border:hover,
+[data-theme='light'] .filter-chip-border.active {
+  background: #9379CC !important;
+}
+
+[data-theme='light'] .filter-chip-count {
+  color: #5a5a63 !important;
+}
+[data-theme='light'] .filter-chip-count.active {
+  color: #dfdfdf !important;
+}
+
+[data-theme='light'] ::-webkit-scrollbar-track {
+  background: #f0ebe0;
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background-color: #9379CC;
+  border-color: #f0ebe0;
+}
+
+[data-theme='light'] ::-webkit-scrollbar-corner {
+  background: #f0ebe0;
+}
+
+[data-theme='light'] * {
+  scrollbar-color: #9379CC #f0ebe0;
+}
+
+/* Lo de arriba usa combinador descendiente (" "), que NO alcanza el scrollbar
+   de la propia <html> (la barra de scroll de toda la página): un elemento no
+   es descendiente de sí mismo. Por eso hace falta esta versión sin
+   descendiente, pegada directamente a html[data-theme='light'], para que el
+   scroll principal del sitio también cambie de color en modo claro. */
+html[data-theme='light']::-webkit-scrollbar-track {
+  background: #f0ebe0;
+}
+
+html[data-theme='light']::-webkit-scrollbar-thumb {
+  background-color: #9379CC;
+  border-color: #f0ebe0;
+}
+
+html[data-theme='light']::-webkit-scrollbar-corner {
+  background: #f0ebe0;
+}
+
+html[data-theme='light'] {
+  scrollbar-color: #9379CC #f0ebe0;
+}
+
+/* Tema claro del sitio público (Hero/AboutMe/Skills/Resume/Proyects/Contact/
+   SimpleFooter/NavBar). Igual que el panel de arriba: se pisan las mismas
+   utilities de Tailwind que ya usa cada sección en vez de reescribir cada
+   componente, y los backgrounds inline de cada <section> (linear-gradient)
+   necesitan !important para ganarle al style="" en el propio elemento. */
+[data-theme='light'] #app {
+  --background-color: #f0ebe0;
+  --secondary-color: #5a5a63;
+}
+
+/* Mismo esquema que el tema oscuro: un degrade encadenado donde el color
+   final de cada sección es el color inicial de la siguiente (y el de
+   Hero/Contact, que no tienen gradiente propio, es --background-color de
+   #app) para que no se note el corte en el borde entre secciones. */
+[data-theme='light'] #about-me {
+  background: linear-gradient(to bottom, #f0ebe0, #f7f2e6) !important;
+}
+
+[data-theme='light'] #skills {
+  background: linear-gradient(to bottom, #f7f2e6, #faf6ec) !important;
+}
+
+[data-theme='light'] #resume {
+  background: linear-gradient(to bottom, #faf6ec, #f3ecdb) !important;
+}
+
+[data-theme='light'] #proyects {
+  background: linear-gradient(to bottom, #f3ecdb, #f0ebe0) !important;
+}
+
+[data-theme='light'] .text-accent {
+  color: #9379CC !important;
+}
+
+[data-theme='light'] .bg-accent {
+  background-color: #9379CC !important;
+}
+
+[data-theme='light'] .border-accent {
+  border-color: #9379CC !important;
+}
+
+[data-theme='light'] #resume-btn:hover {
+  background-color: #6a4bb0 !important;
+}
+
+[data-theme='light'] .text-grayText {
+  color: #5a5a63 !important;
+}
+
+[data-theme='light'] .border-grayText\/30 {
+  border-color: rgba(90, 90, 99, 0.3) !important;
+}
+
+[data-theme='light'] .bg-gray-800 {
+  background-color: #fffbf1 !important;
+}
+
+[data-theme='light'] .hover\:bg-gray-700:hover {
+  background-color: #ece4d4 !important;
+}
+
+/* .pixel-star y .pixel-cloud son de PixelStars.vue/AboutMe.vue (<style
+   scoped>), pero al ser un selector global acá igual matchea por nombre de
+   clase sin importar el atributo data-v- que Vue les agrega. */
+[data-theme='light'] .pixel-star {
+  background-color: #9379CC !important;
+}
+
+/* Menu.svg tiene el trazo en blanco hardcodeado (no es una clase de
+   Tailwind ni currentColor), así que se invierte con un filtro en vez de
+   reescribir el SVG. */
+[data-theme='light'] .nav-menu-icon {
+  filter: invert(1);
+}
+
+[data-theme='light'] #mouse-border path {
+  fill: #5a5a63 !important;
+}
+
+/* Ramas/troncos decorativos (Experience.vue, SimpleFooter.vue): grises del
+   SVG (rgb() por rect, no currentColor) aclarados un poco en su estado base
+   (pedido explícito) para que contrasten mejor contra el fondo crema del
+   tema claro. En tema oscuro NO se invierten — se oscurecen para simular
+   ramas de noche, con el tono general parecido al fondo (#131418/#0e150f).
+   Solo brightness(), SIN contrast(): contrast() empuja los pixeles ya
+   oscuros del sprite original por debajo de 0 y los recorta a negro puro,
+   que se veía como manchas negras feas (pedido explícito: "deben ser mas
+   claros", nada de negro puro) — brightness() sola es una escala lineal
+   pura, nunca genera negro puro a partir de un gris que no lo era. */
+.tree-deco-svg {
+  filter: brightness(1.15);
+}
+
+[data-theme='dark'] .tree-deco-svg {
+  filter: brightness(0.16);
+}
+
+/* Globo aerostático (Hero.vue): mismo sprite en ambos temas ahora (antes
+   solo se mostraba en claro). Sus grises casi blancos y cálidos (pensados
+   contra el fondo crema) tienen que quedar muy parecidos al fondo casi
+   negro del tema oscuro. grayscale(1) primero porque el sprite no es gris
+   puro (tiene un leve tinte cálido) y aplicar contrast()/brightness() con
+   canales R/G/B distintos genera un tono ámbar/rojizo raro — al
+   desaturarlo antes, todos los canales quedan iguales y el resultado se
+   mantiene neutro como el fondo. Solo el sprite del globo (clase
+   balloon-sprite, en el <img> y en el recorte de la canasta), NO el ícono
+   de tecnología que lleva adentro (queda con su propio color intacto). */
+/* contrast() bajado un 15% (2.3 -> 1.955) para que el borde/costuras no se
+   note tanto respecto de los paneles, sin mover el punto medio general de
+   la imagen. El brightness() FINAL (después del contrast, pedido explícito:
+   "todo el globo más oscuro") bajó de 1.1 a 0.85: al ir al final de la
+   cadena escala TODO el globo por igual (mantiene la relación borde/panel
+   ya ajustada arriba) en vez de recalcular el contraste. */
+[data-theme='dark'] .balloon-sprite {
+  filter: grayscale(1) brightness(0.37) contrast(1.955) brightness(0.85);
+}
+
+/* Ícono de tecnología dentro de la canasta (balloon-icon-svg, ver Hero.vue):
+   usa el mismo violeta de acento (#8B6FD6/#5D42A9) que el resto del sitio en
+   oscuro, pero contra el globo ya oscurecido (balloon-sprite de arriba) ese
+   violeta vivo queda demasiado claro/resalta de más (pedido explícito).
+   Versión oscurecida (~55% hacia negro) solo para estos íconos, así el resto
+   del sitio (Skills, íconos flotantes sueltos) conserva el violeta original. */
+[data-theme='dark'] .balloon-icon-svg [fill="#8B6FD6"] {
+  fill: #4c3d76 !important;
+}
+
+[data-theme='dark'] .balloon-icon-svg [fill="#5D42A9"] {
+  fill: #33245d !important;
+}
+
+/* Ícono de C# (Hero.vue, HERO_SKILL_ICONS): el glifo "C#" va en fill="#fff"
+   fijo en el SVG (blanco puro), que en el sitio queda muy chillón/resalta
+   de más contra el fondo oscuro. Se baja a un gris de la misma paleta que
+   ya usa el resto del sitio (grayText), scoped a los íconos de los globos
+   (balloon-icon-svg) para no afectar otros usos de fill="#fff" en el sitio. */
+[data-theme='dark'] .balloon-icon-svg [fill="#fff"] {
+  fill: #9a9aa1 !important;
+}
+
+/* Íconos de Hero (flotantes de fondo) y Skills tienen el violeta hardcodeado
+   en el atributo fill del SVG (no una clase de Tailwind), así que se
+   selecciona por el valor exacto del atributo en vez de por clase. */
+[data-theme='light'] svg [fill="#8B6FD6"],
+[data-theme='light'] svg [fill="#5D42A9"] {
+  /* Blend con el fondo crema (#f0ebe0) en vez del violeta saturado del resto
+     del sitio: estos íconos flotan/adentro de los globos y resaltaban
+     demasiado. */
+  fill: #c6b8d7 !important;
+}
+
+/* Los íconos de GitHub/LinkedIn (AboutMe.vue) tienen fill="#fff" en el propio
+   <svg>, que los <path> hijos heredan al no declarar su propio fill. En claro
+   ese blanco casi no se ve contra el fondo crema, así que se oscurece. */
+[data-theme='light'] #github,
+[data-theme='light'] #linkedin {
+  fill: #16171c !important;
+}
+
+/* El scroller pixelado de arriba queda reservado al panel privado (/panel);
+   en el sitio publico (Home) se oculta la barra pero el scroll normal (rueda/
+   teclado) sigue funcionando. router.afterEach (ver router/index.js) agrega
+   esta clase a <html> solo en la ruta "home". Misma especificidad que las
+   reglas ::-webkit-scrollbar de arriba, así que va al final para ganar el
+   empate. */
+html.is-home-route,
+html.is-home-route * {
+  scrollbar-width: none;
+}
+html.is-home-route::-webkit-scrollbar,
+html.is-home-route *::-webkit-scrollbar {
+  display: none;
 }
