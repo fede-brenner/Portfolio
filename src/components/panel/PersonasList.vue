@@ -70,12 +70,12 @@
             </div>
         </div>
       </div>
-      <div class="pixel-corners-sm inline-block bg-[#5D42A9] p-px h-10">
+      <div class="pixel-corners-sm bg-[#5D42A9] p-px h-10 hidden sm:inline-block">
             <button
             class="pixel-corners-sm bg-[#131418] hover:bg-[#1c1d22] transition-colors text-white h-full px-3 flex items-center gap-2"
             @click="showImport = true"
             >
-            <ImportIcon class="w-5 h-5" /> <span class="hidden sm:inline">Importar</span>
+            <ImportIcon class="w-5 h-5" /> <span class="hidden md:inline">Importar</span>
             </button>
         </div>
         <button
