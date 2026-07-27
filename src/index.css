@@ -202,6 +202,10 @@
   border-color: #dedee3 !important;
 }
 
+[data-theme='light'] .border-\[\#333333\] {
+  border-color: #dbdbd8 !important;
+}
+
 [data-theme='light'] .hover\:bg-\[\#1c1d22\]:hover {
   background-color: #ece4d4 !important;
 }

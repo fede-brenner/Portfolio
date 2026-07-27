@@ -81,7 +81,7 @@
               v-if="showUserMenu"
               class="absolute top-full right-0 mt-2 z-20 bg-[#1c1d22] border border-[#5D42A9] rounded p-1 text-sm w-56"
             >
-              <p class="sm:hidden text-[#888888] px-3 py-2 truncate">{{ userName }}</p>
+              <p class="sm:hidden text-[#888888] px-3 py-2 truncate text-start border-b-2 border-[#333333]">{{ userName }}</p>
               <button
                 class="pixel-corners-sm shadow-on-hover flex flex-row w-full items-center text-left px-3 py-2 hover:bg-[#2a2b31]"
                 @click="goHome"
