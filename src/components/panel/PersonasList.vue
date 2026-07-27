@@ -44,7 +44,7 @@
             </div>
             <div
             v-if="showColumnPicker"
-            class="absolute top-full left-0 md:left-auto md:right-0 mt-2 z-20 bg-[#1c1d22] border border-[#5D42A9] rounded p-3 text-left text-sm w-64 max-w-[calc(100vw-2rem)]"
+            class="absolute top-full left-auto right-0 mt-2 z-20 bg-[#1c1d22] border border-[#5D42A9] rounded p-3 text-left text-sm w-64 max-w-[calc(100vw-2rem)]"
             >
             <div class="flex items-center gap-2 py-1 mb-1 pb-2 border-b border-[#2a2b31]">
                 <ToggleSwitch v-model="showNumberColumn" />
