@@ -1,14 +1,14 @@
 <template>
   <div>
-    <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
-      <div class="pixel-corners-sm bg-[#2a2b31] focus-within:bg-[#5D42A9] p-px flex-1 min-w-[200px] max-w-xs h-10">
+    <div class="flex items-center gap-3 mb-4 flex-wrap w-full">
+      <div class="pixel-corners-sm bg-[#2a2b31] focus-within:bg-[#5D42A9] p-px flex-1 w-full h-10">
         <div class="pixel-corners-sm w-full h-full bg-[#131418] flex items-center gap-2 px-3">
           <PixelSearchIcon class="text-[#888888] flex-shrink-0" />
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Buscar personas..."
-            class="flex-1 min-w-0 h-full bg-transparent text-sm text-white placeholder-[#888888] outline-none"
+            class="flex-1 h-full bg-transparent text-sm text-white placeholder-[#888888] outline-none"
           />
           <button
             v-if="searchQuery"
@@ -31,61 +31,63 @@
           </button>
         </div>
       </div>
-      <div class="flex gap-2">
+      
         <div class="relative" ref="columnPicker">
-          <div class="pixel-corners-sm inline-block bg-[#5D42A9] p-px h-10">
-            <button
-              class="pixel-corners-sm bg-[#131418] hover:bg-[#1c1d22] transition-colors text-white font-bold h-full px-3 flex items-center justify-center"
-              title="Columnas"
-              @click="showColumnPicker = !showColumnPicker"
-            >
-              <PropertiesIcon class="w-5 h-5" />
-            </button>
-          </div>
-          <div
-            v-if="showColumnPicker"
-            class="absolute top-full right-0 mt-2 z-20 bg-[#1c1d22] border border-[#5D42A9] rounded p-3 text-left text-sm w-64"
-          >
-            <div class="flex items-center gap-2 py-1 mb-1 pb-2 border-b border-[#2a2b31]">
-              <ToggleSwitch v-model="showNumberColumn" />
-              <span class="flex-1">Número</span>
+            <div class="pixel-corners-sm inline-block bg-[#5D42A9] p-px h-10">
+                <button
+                    class="pixel-corners-sm bg-[#131418] hover:bg-[#1c1d22] transition-colors text-white font-bold h-full px-3 flex items-center justify-center"
+                    title="Columnas"
+                    @click="showColumnPicker = !showColumnPicker"
+                >
+                    <PropertiesIcon class="w-5 h-5" />
+                </button>
             </div>
             <div
-              v-for="(key, index) in columnOrder"
-              :key="key"
-              draggable="true"
-              class="flex items-center gap-2 py-1 cursor-move"
-              :class="{ 'opacity-40': dragIndex === index }"
-              @dragstart="onDragStart(index)"
-              @dragover.prevent="onDragOver(index)"
-              @dragend="onDragEnd"
-              @drop.prevent
+            v-if="showColumnPicker"
+            class="absolute top-full left-0 md:left-auto md:right-0 mt-2 z-20 bg-[#1c1d22] border border-[#5D42A9] rounded p-3 text-left text-sm w-64 max-w-[calc(100vw-2rem)]"
             >
-              <span class="text-[#888888]">⠿</span>
-              <ToggleSwitch
+            <div class="flex items-center gap-2 py-1 mb-1 pb-2 border-b border-[#2a2b31]">
+                <ToggleSwitch v-model="showNumberColumn" />
+                <span class="flex-1">Número</span>
+            </div>
+            <div
+                v-for="(key, index) in columnOrder"
+                :key="key"
+                draggable="true"
+                class="flex items-center gap-2 py-1 cursor-move"
+                :class="{ 'opacity-40': dragIndex === index }"
+                @dragstart="onDragStart(index)"
+                @dragover.prevent="onDragOver(index)"
+                @dragend="onDragEnd"
+                @drop.prevent
+            >
+                <span class="text-[#888888]">⠿</span>
+                <ToggleSwitch
                 :model-value="visibleColumns.includes(key)"
                 @update:model-value="toggleColumnVisible(key)"
-              />
-              <span class="flex-1">{{ columnLabel(key) }}</span>
+                />
+                <span class="flex-1">{{ columnLabel(key) }}</span>
             </div>
-          </div>
         </div>
-        <div class="pixel-corners-sm inline-block bg-[#5D42A9] p-px h-10">
-          <button
-            class="pixel-corners-sm bg-[#131418] hover:bg-[#1c1d22] transition-colors text-white font-bold h-full px-4 flex items-center gap-2"
+      </div>
+      <div class="pixel-corners-sm inline-block bg-[#5D42A9] p-px h-10">
+            <button
+            class="pixel-corners-sm bg-[#131418] hover:bg-[#1c1d22] transition-colors text-white h-full px-3 flex items-center gap-2"
             @click="showImport = true"
-          >
-            <ImportIcon class="w-5 h-5" /> Importar
-          </button>
+            >
+            <ImportIcon class="w-5 h-5" /> <span class="hidden sm:inline">Importar</span>
+            </button>
         </div>
         <button
-          class="pixel-corners-sm bg-[#5D42A9] hover:opacity-90 text-white font-bold h-10 px-4"
-          @click="openCreate"
+            class="pixel-corners-sm bg-[#5D42A9] hover:opacity-90 text-white h-10 px-4 text-xl sm:text-base flex flex-row gap-2 items-center"
+            @click="openCreate"
         >
-          + Agregar
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="20" height="20">
+            <path d="M8 20h6v2H6v-2H4v-2h4v2Zm12-2h2v2h-2v2h-2v-2h-2v-2h2v-2h2v2ZM4 18H2V6h2v12Zm10 0H8v-2h6v2Zm0-4h-4v-2h4v2Zm8 0h-2V6h2v8Zm-12-2H8V8h2v4Zm6 0h-2V8h2v4Zm-2-4h-4V6h4v2ZM6 6H4V4h2v2Zm14 0h-2V4h2v2Zm-2-2H6V2h12v2Z"/>
+            </svg>
+            <span class="hidden sm:inline">Agregar</span>
         </button>
       </div>
-    </div>
 
     <p v-if="loading" class="text-[#888888]">Cargando personas...</p>
     <p v-else-if="!personas.length" class="text-[#888888]">Todavía no agregaste a nadie.</p>
