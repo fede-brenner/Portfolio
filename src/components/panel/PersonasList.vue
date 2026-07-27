@@ -82,7 +82,7 @@
           class="pixel-corners-sm bg-[#5D42A9] hover:opacity-90 text-white font-bold h-10 px-4"
           @click="openCreate"
         >
-          + Agregar persona
+          + Agregar
         </button>
       </div>
     </div>

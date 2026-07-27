@@ -55,8 +55,8 @@
               :disabled="loadingPersonas"
               @click="fetchPersonas"
             >
-              <ReloadIcon v-if="!loadingPersonas" class="me-1"/>
-              <p class="m-0">{{ loadingPersonas ? t.panel.refresh.loading : t.panel.refresh.idle }}</p>
+              <ReloadIcon class="sm:me-1" :class="{ 'animate-spin': loadingPersonas }"/>
+              <p class="m-0 hidden lg:block">{{ loadingPersonas ? t.panel.refresh.loading : t.panel.refresh.idle }}</p>
             </button>
           </div>
 
@@ -73,7 +73,7 @@
                     referrerpolicy="no-referrer"
                 />
             </div>
-              <span class="text-sm text-[#888888]">{{ userName }}</span>
+              <span class="hidden sm:block text-sm text-[#888888]">{{ userName }}</span>
               <PixelTriangle direction="down" class="text-[#888888]" />
             </button>
 
@@ -81,6 +81,7 @@
               v-if="showUserMenu"
               class="absolute top-full right-0 mt-2 z-20 bg-[#1c1d22] border border-[#5D42A9] rounded p-1 text-sm w-56"
             >
+              <p class="sm:hidden text-[#888888] px-3 py-2 truncate">{{ userName }}</p>
               <button
                 class="pixel-corners-sm shadow-on-hover flex flex-row w-full items-center text-left px-3 py-2 hover:bg-[#2a2b31]"
                 @click="goHome"
@@ -91,39 +92,19 @@
                 </svg>
                 <p class="m-0 ms-1">{{ t.panel.userMenu.goHome }}</p>
               </button>
-              <button class="justify-between pixel-corners-sm shadow-on-hover flex flex-row w-full items-center text-left px-3 py-2 hover:bg-[#2a2b31]" @click="setTheme(theme === 'light' ? 'dark' : 'light')">
+              <button class="justify-between pixel-corners-sm shadow-on-hover flex flex-row w-full items-center text-left px-3 py-2 hover:bg-[#2a2b31]" @click.stop="setTheme(theme === 'light' ? 'dark' : 'light')">
                 <span>{{ t.panel.userMenu.theme }}</span>
                 <PixelMoon v-if="theme == 'dark'"/>
                 <PixelSun v-if="theme == 'light'"/>
               </button>
 
-              <div class="relative">
-                <button
-                  class="justify-between pixel-corners-sm shadow-on-hover flex flex-row w-full items-center text-left px-3 py-2 hover:bg-[#2a2b31]"
-                  @click.stop="showLangMenu = !showLangMenu"
-                >
-                  <span class="flex items-center gap-2">
-                    <LanguageIcon />
-                    {{ t.panel.userMenu.language }}
-                  </span>
-                  <PixelTriangle direction="down" class="text-[#888888]" />
-                </button>
-                <div
-                  v-if="showLangMenu"
-                  class="mt-1 ms-2 border-s border-[#2a2b31] ps-2"
-                >
-                  <button
-                    v-for="lang in LANGUAGES"
-                    :key="lang"
-                    class="pixel-corners-sm shadow-on-hover flex flex-row w-full items-center justify-between text-left px-3 py-2 hover:bg-[#2a2b31]"
-                    :class="{ 'text-[#8B6FD6]': lang === languageState.value }"
-                    @click="selectLanguage(lang)"
-                  >
-                    <span>{{ LANGUAGE_LABELS[lang] }}</span>
-                    <span v-if="lang === languageState.value">✓</span>
-                  </button>
-                </div>
-              </div>
+              <button
+                class="justify-between pixel-corners-sm shadow-on-hover flex flex-row w-full items-center text-left px-3 py-2 hover:bg-[#2a2b31]"
+                @click.stop="cycleLanguage"
+              >
+                <span>{{ LANGUAGE_LABELS[languageState.value] }}</span>
+                <LanguageIcon />
+              </button>
 
               <button
                 class="justify-between pixel-corners-sm shadow-on-hover flex flex-row w-full text-left px-3 py-2 hover:bg-[#2a2b31] text-[#BE2D2D]"
@@ -179,7 +160,6 @@ export default {
         ? localStorage.getItem('panel:tab')
         : 'graficos',
       showUserMenu: false,
-      showLangMenu: false,
       languageState,
       LANGUAGES,
       LANGUAGE_LABELS,
@@ -255,14 +235,13 @@ export default {
       const wrapper = this.$refs.userMenu
       if (wrapper && !wrapper.contains(event.target)) {
         this.showUserMenu = false
-        this.showLangMenu = false
       }
     },
     setTheme,
-    selectLanguage(lang) {
-      setLanguage(lang)
-      this.showLangMenu = false
-      this.showUserMenu = false
+    cycleLanguage() {
+      const idx = this.LANGUAGES.indexOf(this.languageState.value)
+      const next = this.LANGUAGES[(idx + 1) % this.LANGUAGES.length]
+      setLanguage(next)
     },
     goHome() {
       this.showUserMenu = false

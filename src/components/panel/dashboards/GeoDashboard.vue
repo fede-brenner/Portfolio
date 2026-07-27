@@ -20,17 +20,17 @@
       </div>
     </div>
 
-<div class="flex flex-row gap-6 w-full">
-  <!-- Primer mapa: Ocupa el 55% del espacio disponible -->
-  <div class="bg-[#1c1d22] rounded p-4 mb-6 pixel-corners flex-[60] min-w-0">
+<div class="flex flex-col md:flex-row gap-6 w-full">
+  <!-- Primer mapa: Ocupa el 60% del espacio disponible en desktop -->
+  <div class="bg-[#1c1d22] rounded p-4 mb-6 pixel-corners md:flex-[60] min-w-0">
     <h3 class="text-sm font-bold mb-2 text-[#888888] uppercase">Mapa de países</h3>
     <p v-if="mapsConfigError" class="text-red-400 text-sm">{{ mapsConfigError }}</p>
     <p v-else-if="mapError" class="text-red-400 text-sm">{{ mapError }}</p>
     <div ref="countryMapEl" class="rounded" style="height: 26rem"></div>
   </div>
 
-  <!-- Segundo mapa: Ocupa el 45% restante -->
-  <div class="bg-[#1c1d22] rounded p-4 mb-6 pixel-corners flex-[40] min-w-0">
+  <!-- Segundo mapa: Ocupa el 40% restante en desktop -->
+  <div class="bg-[#1c1d22] rounded p-4 mb-6 pixel-corners md:flex-[40] min-w-0">
     <h3 class="text-sm font-bold mb-2 text-[#888888] uppercase">Mapa de burbujas por barrio</h3>
     <p v-if="!bubbleData.length" class="text-[#888888] text-sm">
       Todavía no hay barrios con geolocalización cargada. Se completa al elegir/crear un barrio
