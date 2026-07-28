@@ -22,7 +22,7 @@ export const translations = {
         { name: 'OUTFIT MAKER', description: 'Final thesis project for my Systems Engineering degree (UAI): a full business plan and software design for an AI-powered app that helps users decide what to wear from their own closet, factoring in weather, occasion and personal style, with a social feed to share outfits. Designed as a Flutter mobile app with a Vue.js admin panel and a microservices backend, using computer vision to recognize garments and a weather API for context-aware suggestions. Covers market research, a B2C (free) + B2B (brand data & marketing) business model, financial projections, and full software design: use cases, domain diagrams and screen flows.' },
       ],
     },
-    contact: { heading: 'CONTACT', name: 'Name', email: 'Email', message: 'Message', send: 'Send message' },
+    contact: { heading: 'CONTACT', name: 'Name', email: 'Email', message: 'Message', send: 'Send message', sending: 'Sending...', sent: 'Message sent! Thanks for reaching out.', error: 'Something went wrong. Please try again.' },
     footer: 'Page designed by Federico Brenner',
     panel: {
       notConfigured: { heading: 'Supabase is not configured', description: 'VUE_APP_SUPABASE_URL and/or VUE_APP_SUPABASE_ANON_KEY are missing from your .env.local file. Fill them in and restart the dev server.' },
@@ -58,7 +58,7 @@ export const translations = {
         { name: 'OUTFIT MAKER', description: 'Abschlussprojekt für meinen Studiengang Systemtechnik (UAI): ein vollständiger Geschäftsplan und Softwareentwurf für eine KI-gestützte App, die Nutzern hilft, aus ihrem eigenen Kleiderschrank die passende Kleidung auszuwählen, unter Berücksichtigung von Wetter, Anlass und persönlichem Stil, mit einem sozialen Feed zum Teilen von Outfits. Entworfen als Flutter-Mobile-App mit einem Vue.js-Admin-Panel und einem Microservices-Backend, mit Computer Vision zur Erkennung von Kleidungsstücken und einer Wetter-API für kontextbezogene Vorschläge. Umfasst Marktforschung, ein B2C (kostenlos) + B2B (Markendaten & Marketing) Geschäftsmodell, Finanzprognosen und vollständigen Softwareentwurf: Use Cases, Domänendiagramme und Bildschirmabläufe.' },
       ],
     },
-    contact: { heading: 'KONTAKT', name: 'Name', email: 'E-Mail', message: 'Nachricht', send: 'Nachricht senden' },
+    contact: { heading: 'KONTAKT', name: 'Name', email: 'E-Mail', message: 'Nachricht', send: 'Nachricht senden', sending: 'Wird gesendet...', sent: 'Nachricht gesendet! Danke für deine Nachricht.', error: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.' },
     footer: 'Seite gestaltet von Federico Brenner',
     panel: {
       notConfigured: { heading: 'Supabase ist nicht konfiguriert', description: 'VUE_APP_SUPABASE_URL und/oder VUE_APP_SUPABASE_ANON_KEY fehlen in deiner .env.local-Datei. Trage sie ein und starte den Dev-Server neu.' },
@@ -94,7 +94,7 @@ export const translations = {
         { name: 'OUTFIT MAKER', description: 'Proyecto final de tesis para mi carrera de Ingeniería en Sistemas (UAI): un plan de negocio y diseño de software completo para una app con IA que ayuda a los usuarios a decidir qué ponerse desde su propio placard, considerando el clima, la ocasión y el estilo personal, con un feed social para compartir outfits. Diseñada como app móvil en Flutter con un panel de administración en Vue.js y un backend de microservicios, usando visión por computadora para reconocer prendas y una API de clima para sugerencias según el contexto. Incluye investigación de mercado, un modelo de negocio B2C (gratuito) + B2B (datos de marca y marketing), proyecciones financieras y diseño de software completo: casos de uso, diagramas de dominio y flujos de pantalla.' },
       ],
     },
-    contact: { heading: 'CONTACTO', name: 'Nombre', email: 'Email', message: 'Mensaje', send: 'Enviar mensaje' },
+    contact: { heading: 'CONTACTO', name: 'Nombre', email: 'Email', message: 'Mensaje', send: 'Enviar mensaje', sending: 'Enviando...', sent: '¡Mensaje enviado! Gracias por escribirme.', error: 'Algo salió mal. Probá de nuevo.' },
     footer: 'Página diseñada por Federico Brenner',
     panel: {
       notConfigured: { heading: 'Supabase no está configurado', description: 'Faltan VUE_APP_SUPABASE_URL y/o VUE_APP_SUPABASE_ANON_KEY en tu archivo .env.local. Completalas y reiniciá el servidor de desarrollo.' },

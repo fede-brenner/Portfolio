@@ -1,6 +1,6 @@
 <template>
     <section id="about-me" class="p-0 flex items-center justify-center py-40 px-8 text-white relative overflow-hidden" style="background: linear-gradient(to bottom, #131418, #1a1c26);">
-        <PixelStars/>
+        <PixelStars shooting-stars/>
         <PixelClouds :clouds="clouds"/>
         <div id="container" class="relative z-10 w-full max-w-[1080px] md:grid md:grid-flow-col md:justify-between md:items-center md:gap-12 md:grid-cols-4">
             <div id="about-me-img" class="md:justify-self-end  hidden md:block"></div>

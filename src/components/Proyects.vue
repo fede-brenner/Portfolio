@@ -1,6 +1,6 @@
 <template>
     <section id="proyects" class="p-8 text-white relative overflow-hidden" style="background: linear-gradient(to bottom, #1a1815, #131418);">
-        <PixelStars/>
+        <PixelStars fireflies/>
         <div id="container" class="relative z-10 w-full max-w-[1080px] mx-auto">
             <h2 class="py-10 text-4xl text-left">{{ t.proyects.heading }}</h2>
             <div class="m-0 flex items-center justify-center">

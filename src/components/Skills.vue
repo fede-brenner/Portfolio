@@ -1,6 +1,6 @@
 <template>
     <section id="skills" class="p-0 flex flex-col items-center justify-center py-32 px-2 md:px-8 text-white relative overflow-hidden" style="background: linear-gradient(to bottom, #1a1c26, #0e150f);">
-        <PixelStars/>
+        <PixelStars shooting-stars/>
         <PixelClouds :clouds="clouds"/>
         <div class="relative z-10 w-full flex flex-col items-center max-w-[1080px]">
             <h2 class="w-full text-4xl my-10 text-left px-6 md:px-0">{{ t.skills.heading }}</h2>

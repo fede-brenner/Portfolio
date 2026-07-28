@@ -1,6 +1,6 @@
 <template>
     <section class="h-screen p-0 flex items-center justify-center relative overflow-hidden px-5">
-        <PixelStars sun birds/>
+        <PixelStars sun birds shooting-stars/>
         <!-- Nubes que aparecen en un punto random del Hero con fade-in,
              recorren un tramo random (no la pantalla completa) y desaparecen
              con fade-out — en ambos temas (pedido explícito: antes solo en

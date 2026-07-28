@@ -1,6 +1,6 @@
 <template>
     <section id="resume" class="p-8 text-white relative overflow-hidden" style="background: linear-gradient(to bottom, #0e150f, #1a1815);">
-        <PixelStars/>
+        <PixelStars fireflies/>
         <img
             :src="treeBranch"
             alt=""

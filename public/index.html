@@ -13,5 +13,15 @@
     </noscript>
     <div id="app"></div>
     <!-- built files will be auto injected -->
+    <!-- Form estático oculto: Netlify detecta forms parseando el HTML en
+         build-time, no puede ver el <form> real que arma Vue en runtime.
+         Este duplicado (mismos name/fields) es solo para que su bot lo
+         registre; el submit real lo maneja Contact.vue por fetch. -->
+    <form name="contact" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="text" name="name">
+      <input type="email" name="email">
+      <textarea name="message"></textarea>
+      <input type="text" name="bot-field">
+    </form>
   </body>
 </html>

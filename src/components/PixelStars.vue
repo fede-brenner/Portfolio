@@ -62,6 +62,42 @@
                  lugar que ocupa el sol en claro. Sin animación de giro (una
                  luna no rota como el sol): solo el mismo pulso de brillo. -->
             <img v-if="sun" :src="moonImg" alt="" class="pixel-moon-deco" style="image-rendering: pixelated;">
+            <!-- Cohetes/estrellas fugaces: cruzan en diagonal de vez en
+                 cuando (no todos a la vez, ver delays/duraciones distintas
+                 en SHOOTING_STARS), con una cola que se desvanece detrás.
+                 Solo en las secciones donde se pide explícitamente (prop
+                 `shootingStars`), no en las 6 secciones que usan este mismo
+                 componente. -->
+            <template v-if="shootingStars">
+                <span
+                    v-for="(shot, index) in shootingStarConfigs"
+                    :key="'shooting-star-' + index"
+                    class="shooting-star"
+                    :style="{
+                        top: shot.top,
+                        left: shot.left,
+                        '--angle': shot.angle + 'deg',
+                        animationDuration: shot.duration,
+                        animationDelay: shot.delay
+                    }"
+                ></span>
+            </template>
+            <!-- Luciérnagas: puntitos que flotan a la deriva (drift en loop,
+                 varios waypoints) con un brillo que pulsa. Solo en las
+                 secciones donde se pide explícitamente (prop `fireflies`). -->
+            <template v-if="fireflies">
+                <span
+                    v-for="(fly, index) in fireflyConfigs"
+                    :key="'firefly-' + index"
+                    class="firefly"
+                    :style="{
+                        top: fly.top,
+                        left: fly.left,
+                        animationDuration: fly.driftDuration + ', ' + fly.glowDuration,
+                        animationDelay: fly.delay + ', ' + fly.delay
+                    }"
+                ></span>
+            </template>
         </template>
     </div>
 </template>
@@ -137,6 +173,28 @@ const PIXEL_STARS = [
     { top: '95%', left: '45%', size: 2, delay: '.8s', duration: '2.6s' },
 ]
 
+// Cada una cruza en diagonal (abajo-derecha) y se desvanece; duration larga
+// (ver keyframes: el recorrido visible ocupa solo un tramo corto al
+// principio del ciclo) para que aparezcan de vez en cuando, no seguido.
+// Delays escalonados para que no salten todas juntas.
+const SHOOTING_STARS = [
+    { top: '5%', left: '65%', angle: 25, duration: '9s', delay: '2s' },
+    { top: '12%', left: '20%', angle: 20, duration: '13s', delay: '6s' },
+    { top: '2%', left: '85%', angle: 30, duration: '11s', delay: '9.5s' },
+]
+
+// Posiciones y timings variados para que no floten todas en sincro. driftDuration
+// controla el recorrido a la deriva (varios waypoints, ver keyframes), glowDuration
+// el pulso de brillo (independiente, por eso son dos animaciones separadas).
+const FIREFLIES = [
+    { top: '75%', left: '10%', driftDuration: '9s', glowDuration: '2.4s', delay: '0s' },
+    { top: '85%', left: '30%', driftDuration: '11s', glowDuration: '3.1s', delay: '1.2s' },
+    { top: '65%', left: '50%', driftDuration: '8s', glowDuration: '2.8s', delay: '2.5s' },
+    { top: '90%', left: '68%', driftDuration: '12s', glowDuration: '2.2s', delay: '.6s' },
+    { top: '70%', left: '85%', driftDuration: '10s', glowDuration: '3.4s', delay: '3s' },
+    { top: '55%', left: '25%', driftDuration: '13s', glowDuration: '2.6s', delay: '1.8s' },
+]
+
 export default {
     name: 'Pixel-Stars',
     props: {
@@ -151,12 +209,25 @@ export default {
             type: Boolean,
             default: false,
         },
+        // Solo Hero, AboutMe y Skills piden estrellas fugaces explícitamente;
+        // el resto de las secciones que usan este componente no las muestra.
+        shootingStars: {
+            type: Boolean,
+            default: false,
+        },
+        // Solo Experience, Proyects y Contact piden luciérnagas explícitamente.
+        fireflies: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {
             stars: PIXEL_STARS,
             birdConfigs: PIXEL_BIRDS,
             sunRays: SUN_RAYS,
+            shootingStarConfigs: SHOOTING_STARS,
+            fireflyConfigs: FIREFLIES,
             themeState,
             sunImg,
             moonImg,
@@ -333,5 +404,74 @@ export default {
     @keyframes pixel-bird-flap {
         0%, 100% { transform: scaleY(1); }
         50% { transform: scaleY(.55); }
+    }
+
+    /* Estrella fugaz: un punto que viaja en diagonal (rotate fijo + translateX
+       animado, así se mueve en línea recta a ese ángulo) con una cola
+       (::before) que se desvanece hacia atrás. La distancia recorrida sigue
+       creciendo durante todo el ciclo, pero solo es visible en el primer
+       tramo (ver opacity en los keyframes) — el resto es la "pausa" larga
+       entre una estrella fugaz y la siguiente. */
+    .shooting-star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: #f4f1ff;
+        opacity: 0;
+        animation-name: shooting-star-fly;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+    }
+
+    .shooting-star::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        width: 46px;
+        height: 1px;
+        background: linear-gradient(to left, rgba(244, 241, 255, .85), transparent);
+        transform: translateY(-50%);
+    }
+
+    @keyframes shooting-star-fly {
+        /* La distancia (160vmax) es a propósito mucho más larga que la
+           diagonal de cualquier viewport, para garantizar que ya esté fuera
+           de pantalla cuando el fade termina (33%-36%), en vez de desvanecerse
+           a mitad de camino todavía visible. */
+        0%, 26% { opacity: 0; transform: rotate(var(--angle)) translateX(0); }
+        27% { opacity: 1; transform: rotate(var(--angle)) translateX(4vmax); }
+        31% { opacity: 1; transform: rotate(var(--angle)) translateX(120vmax); }
+        36%, 100% { opacity: 0; transform: rotate(var(--angle)) translateX(160vmax); }
+    }
+
+    /* Luciérnaga: puntito con glow (box-shadow, no blur filter para que sea
+       liviano) que flota a la deriva en un recorrido de varios waypoints
+       (drift) mientras su brillo pulsa por separado (glow) — dos animaciones
+       independientes en el mismo elemento para que no queden sincronizadas
+       entre sí. */
+    .firefly {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: #d9f57a;
+        box-shadow: 0 0 6px 2px rgba(217, 245, 122, .8);
+        animation-name: firefly-drift, firefly-glow;
+        animation-timing-function: ease-in-out, ease-in-out;
+        animation-iteration-count: infinite, infinite;
+    }
+
+    @keyframes firefly-drift {
+        0%   { transform: translate(0, 0); }
+        25%  { transform: translate(18px, -22px); }
+        50%  { transform: translate(-14px, -34px); }
+        75%  { transform: translate(-26px, -8px); }
+        100% { transform: translate(0, 0); }
+    }
+
+    @keyframes firefly-glow {
+        0%, 100% { opacity: .15; }
+        50% { opacity: .95; }
     }
 </style>
