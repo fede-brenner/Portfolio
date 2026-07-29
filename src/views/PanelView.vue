@@ -146,6 +146,32 @@ import { themeState, setTheme } from '@/lib/theme'
 import { languageState, setLanguage, LANGUAGES, LANGUAGE_LABELS } from '@/lib/language'
 import { translations } from '@/config/translations'
 import ReloadIcon from '@/components/panel/icons/ReloadIcon.vue'
+import { getCachedSignedUrl } from '@/lib/signedUrlCache'
+
+const PERSONAS_CACHE_KEY = 'personasCache'
+const PERSONAS_CACHE_TTL_MS = 15 * 60 * 1000
+
+function loadPersonasCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PERSONAS_CACHE_KEY))
+    if (raw && Array.isArray(raw.data) && typeof raw.fetchedAt === 'number') return raw
+  } catch {
+    // ignorar y forzar fetch
+  }
+  return null
+}
+
+function savePersonasCache(data) {
+  try {
+    localStorage.setItem(PERSONAS_CACHE_KEY, JSON.stringify({ data, fetchedAt: Date.now() }))
+  } catch {
+    // localStorage lleno o no disponible: sigue funcionando sin cache persistente
+  }
+}
+
+function clearPersonasCache() {
+  localStorage.removeItem(PERSONAS_CACHE_KEY)
+}
 
 export default {
   name: 'PanelView',
@@ -205,8 +231,18 @@ export default {
     this.session = data.session
     this.loading = false
 
+    // La lista de personas (y las imágenes que trae) ya no se carga sola en
+    // cada login/vuelta a la pestaña: se reusa la última copia guardada en
+    // localStorage mientras tenga menos de 15 minutos, y solo se pide de
+    // nuevo con eso vencido o al apretar "Actualizar lista" a mano.
     if (this.isAuthorized) {
-      this.fetchPersonas()
+      const cache = loadPersonasCache()
+      if (cache && Date.now() - cache.fetchedAt < PERSONAS_CACHE_TTL_MS) {
+        this.personas = cache.data
+        this.hasLoadedPersonas = true
+      } else {
+        this.fetchPersonas()
+      }
     } else if (this.session) {
       await supabase.auth.signOut()
       this.session = null
@@ -217,11 +253,6 @@ export default {
       if (session && session.user?.email !== ALLOWED_EMAIL) {
         await supabase.auth.signOut()
         this.session = null
-      } else if (session && !this.hasLoadedPersonas) {
-        // onAuthStateChange también dispara al volver a la pestaña (refresh de
-        // token), no solo en el login real. Sin este guard, cada vez que volvías
-        // a la pestaña se repetía el fetch completo + firma de imágenes.
-        this.fetchPersonas()
       }
     })
     this.authSubscription = sub.subscription
@@ -261,6 +292,7 @@ export default {
       this.session = null
       this.personas = []
       this.hasLoadedPersonas = false
+      clearPersonasCache()
     },
     async fetchPersonas() {
       this.loadingPersonas = true
@@ -272,14 +304,16 @@ export default {
       if (!error) {
         this.personas = await Promise.all(
           data.map(async (persona) => {
-            if (!persona.imagen_path) return { ...persona, imagen_signed_url: null }
-            const { data: signed } = await supabase.storage
-              .from('personas-imagenes')
-              .createSignedUrl(persona.imagen_path, 3600)
-            return { ...persona, imagen_signed_url: signed?.signedUrl || null }
+            if (!persona.imagen_path) return { ...persona, imagen_signed_url: null, imagen_thumb_signed_url: null }
+            const url = await getCachedSignedUrl(supabase, 'personas-imagenes', persona.imagen_path)
+            const thumbUrl = persona.imagen_thumb_path
+              ? await getCachedSignedUrl(supabase, 'personas-imagenes', persona.imagen_thumb_path)
+              : null
+            return { ...persona, imagen_signed_url: url, imagen_thumb_signed_url: thumbUrl }
           })
         )
         this.hasLoadedPersonas = true
+        savePersonasCache(this.personas)
       }
       this.loadingPersonas = false
     },
@@ -287,10 +321,12 @@ export default {
       const idx = this.personas.findIndex((p) => p.id === persona.id)
       if (idx === -1) this.personas.unshift(persona)
       else this.personas.splice(idx, 1, persona)
+      savePersonasCache(this.personas)
     },
     onPersonaDeleted(id) {
       const idx = this.personas.findIndex((p) => p.id === id)
       if (idx !== -1) this.personas.splice(idx, 1)
+      savePersonasCache(this.personas)
     }
   }
 }

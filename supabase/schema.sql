@@ -54,3 +54,12 @@ create policy "solo el owner puede sus imagenes"
 
 alter table personas add column if not exists barrio_lat double precision;
 alter table personas add column if not exists barrio_lng double precision;
+
+-- ============================================================
+-- Thumbnail separado de la imagen completa: la lista de personas
+-- muestra un cuadradito de ~40px, no tiene sentido bajar la misma
+-- imagen de 1600px que se usa en el perfil. Se guarda el path del
+-- thumbnail (200px, webp) por separado.
+-- ============================================================
+
+alter table personas add column if not exists imagen_thumb_path text;

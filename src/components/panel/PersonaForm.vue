@@ -174,6 +174,8 @@
 
 <script>
 import { supabase } from '@/lib/supabaseClient'
+import { getCachedSignedUrl, invalidateCachedSignedUrl } from '@/lib/signedUrlCache'
+import { compressImageToWebp, generateThumbnail } from '@/lib/imageCompression'
 import SearchableSelect from './SearchableSelect.vue'
 import BarrioSelect from './BarrioSelect.vue'
 import ToggleSwitch from './ToggleSwitch.vue'
@@ -252,25 +254,36 @@ export default {
       this.form.barrio_lat = lat
       this.form.barrio_lng = lng
     },
-    onFileChange(event) {
+    async onFileChange(event) {
       const file = event.target.files[0]
       if (!file) return
-      this.imageFile = file
-      this.previewUrl = URL.createObjectURL(file)
+      this.imageFile = await compressImageToWebp(file)
+      this.previewUrl = URL.createObjectURL(this.imageFile)
     },
     async save() {
       this.saving = true
       this.errorMsg = ''
       try {
         let imagenPath = this.persona?.imagen_path || null
+        let imagenThumbPath = this.persona?.imagen_thumb_path || null
 
         if (this.imageFile) {
           const path = `${Date.now()}-${this.imageFile.name}`
           const { error: uploadError } = await supabase.storage
             .from(BUCKET)
-            .upload(path, this.imageFile)
+            .upload(path, this.imageFile, { cacheControl: '31536000' })
           if (uploadError) throw uploadError
           imagenPath = path
+
+          const thumb = await generateThumbnail(this.imageFile)
+          if (thumb) {
+            const thumbPath = `thumb-${Date.now()}-${thumb.name}`
+            const { error: thumbUploadError } = await supabase.storage
+              .from(BUCKET)
+              .upload(thumbPath, thumb, { cacheControl: '31536000' })
+            if (thumbUploadError) throw thumbUploadError
+            imagenThumbPath = thumbPath
+          }
         }
 
         const payload = {
@@ -287,6 +300,7 @@ export default {
           instagram: this.form.instagram || null,
           color_pelo: this.form.color_pelo || null,
           imagen_path: imagenPath,
+          imagen_thumb_path: imagenThumbPath,
           bool1: !!this.form.bool1,
           bool2: !!this.form.bool2,
           bool3: !!this.form.bool3,
@@ -304,13 +318,17 @@ export default {
 
         let imagen_signed_url = null
         if (data.imagen_path) {
-          const { data: signed } = await supabase.storage
-            .from(BUCKET)
-            .createSignedUrl(data.imagen_path, 3600)
-          imagen_signed_url = signed?.signedUrl || null
+          if (this.imageFile) invalidateCachedSignedUrl(BUCKET, data.imagen_path)
+          imagen_signed_url = await getCachedSignedUrl(supabase, BUCKET, data.imagen_path)
         }
 
-        this.$emit('saved', { ...data, imagen_signed_url })
+        let imagen_thumb_signed_url = null
+        if (data.imagen_thumb_path) {
+          if (this.imageFile) invalidateCachedSignedUrl(BUCKET, data.imagen_thumb_path)
+          imagen_thumb_signed_url = await getCachedSignedUrl(supabase, BUCKET, data.imagen_thumb_path)
+        }
+
+        this.$emit('saved', { ...data, imagen_signed_url, imagen_thumb_signed_url })
       } catch (err) {
         this.errorMsg = err.message || 'Error al guardar'
       } finally {

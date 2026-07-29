@@ -96,6 +96,7 @@
 <script>
 import { supabase } from '@/lib/supabaseClient'
 import PaisFlag from './PaisFlag.vue'
+import { compressImageToWebp, generateThumbnail } from '@/lib/imageCompression'
 
 const BUCKET = 'personas-imagenes'
 
@@ -157,12 +158,27 @@ export default {
 
         for (const row of this.rows) {
           let imagenPath = null
+          let imagenThumbPath = null
           if (row.imageBuffer) {
-            const path = `import-${Date.now()}-${Math.random().toString(36).slice(2)}.${row.imageExtension}`
-            const blob = new Blob([row.imageBuffer], { type: `image/${row.imageExtension}` })
-            const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, blob)
+            const rawFile = new File(
+              [row.imageBuffer],
+              `import.${row.imageExtension}`,
+              { type: `image/${row.imageExtension}` }
+            )
+            const compressed = await compressImageToWebp(rawFile)
+            const ext = compressed.name.split('.').pop()
+            const path = `import-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+            const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, compressed, { cacheControl: '31536000' })
             if (uploadError) throw uploadError
             imagenPath = path
+
+            const thumb = await generateThumbnail(compressed)
+            if (thumb) {
+              const thumbPath = `thumb-import-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
+              const { error: thumbUploadError } = await supabase.storage.from(BUCKET).upload(thumbPath, thumb, { cacheControl: '31536000' })
+              if (thumbUploadError) throw thumbUploadError
+              imagenThumbPath = thumbPath
+            }
           }
 
           payloads.push({
@@ -179,6 +195,7 @@ export default {
             instagram: row.instagram || null,
             color_pelo: row.color_pelo || null,
             imagen_path: imagenPath,
+            imagen_thumb_path: imagenThumbPath,
             bool1: row.bool1,
             bool2: row.bool2,
             bool3: row.bool3,

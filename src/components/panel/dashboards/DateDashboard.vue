@@ -45,12 +45,94 @@
 
     <div class="bg-[#1c1d22] rounded p-4 pixel-corners">
       <h3 class="text-sm font-bold mb-2 text-[#888888] uppercase">Por día del mes</h3>
-      <Bar :data="byDayOfMonthData" :options="chartOptionsFor('day')" />
+      <div style="height: 320px">
+        <Bar :data="byDayOfMonthData" :options="chartOptionsFor('day', { maintainAspectRatio: false })" />
+      </div>
     </div>
 
     <div class="bg-[#1c1d22] rounded p-4 pixel-corners">
       <h3 class="text-sm font-bold mb-2 text-[#888888] uppercase">Por mes de cada año</h3>
-      <Bar :data="byYearMonthData" :options="chartOptionsFor('yearMonth')" />
+      <div class="overflow-x-auto calendar-scroll">
+        <div
+          class="lg:!min-w-0 lg:w-full"
+          :style="{ '--ym-chart-w': yearMonthChartWidth + 'px', minWidth: 'var(--ym-chart-w)', height: '320px' }"
+        >
+          <Bar :data="byYearMonthData" :options="chartOptionsFor('yearMonth', { maintainAspectRatio: false })" />
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-[#1c1d22] rounded p-4 pixel-corners">
+      <h3 class="text-sm font-bold mb-2 text-[#888888] uppercase">Calendario de fechas</h3>
+      <div v-if="!calendarWeeks.length" class="text-sm text-[#888888]">Sin fechas cargadas.</div>
+      <div v-else class="flex">
+        <!-- Eje de días, fuera del contenedor con scroll: queda fijo a la
+             izquierda sin importar cuánto se scrollee horizontalmente. El
+             spacer de arriba iguala la altura del header año+mes del lado
+             derecho, para que las filas de Lun/Mié/Vie queden alineadas con
+             sus cuadrados. -->
+        <div class="flex flex-col mr-1 flex-shrink-0">
+          <div style="height: 28px"></div>
+          <div class="grid" :style="{ gridTemplateRows: 'repeat(7, 12px)', gap: '3px', width: '20px' }">
+            <span
+              v-for="label in dayLabels"
+              :key="label.row"
+              class="text-[10px] text-[#888888] leading-[12px]"
+              :style="{ gridRow: label.row }"
+            >{{ label.text }}</span>
+          </div>
+        </div>
+
+        <div ref="calendarScroll" class="overflow-x-auto calendar-scroll">
+          <div style="width: max-content" class="pb-2">
+            <!-- Año (arriba) y mes (abajo) por semana donde cambian, en la
+                 misma coordenada X que esa columna. -->
+            <div class="relative" style="height: 28px" :style="{ width: (calendarWeeks.length * 15) + 'px' }">
+              <span
+                v-for="label in calendarYearLabels"
+                :key="'year-' + label.weekIndex"
+                class="absolute top-0 text-[10px] font-bold text-[#888888] whitespace-nowrap"
+                :style="{ left: (label.weekIndex * 15) + 'px' }"
+              >{{ label.text }}</span>
+              <span
+                v-for="label in calendarMonthLabels"
+                :key="'month-' + label.weekIndex"
+                class="absolute text-[10px] text-[#888888] whitespace-nowrap"
+                style="top: 14px"
+                :style="{ left: (label.weekIndex * 15) + 'px' }"
+              >{{ label.text }}</span>
+            </div>
+
+            <div
+              class="grid gap-[3px]"
+              :style="{
+                gridTemplateColumns: `repeat(${calendarWeeks.length}, 12px)`,
+                gridTemplateRows: 'repeat(7, 12px)',
+                gridAutoFlow: 'column'
+              }"
+            >
+              <span
+                v-for="day in calendarDays"
+                :key="day.date"
+                class="calendar-day"
+                :class="{ 'calendar-day--empty': day.level < 0, 'calendar-day--active': activeFilters.date === day.date }"
+                :style="{ backgroundColor: day.level < 0 ? 'transparent' : calendarColors[day.level] }"
+                :title="day.level < 0 ? '' : `${day.date}: ${day.count} persona${day.count === 1 ? '' : 's'}`"
+                @click="day.level >= 0 && toggleFilter('date', day.date)"
+              ></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-xs text-[#888888] mt-2">
+        Cada cuadrado es un día; cuanto más violeta, más personas en esa fecha. Tocá un día para filtrar.
+      </p>
+      <div class="flex flex-wrap gap-3 mt-2">
+        <div v-for="item in calendarLegend" :key="item.level" class="flex items-center gap-1.5 text-xs text-[#888888]">
+          <span class="calendar-legend-swatch" :style="{ backgroundColor: calendarColors[item.level] }"></span>
+          {{ item.text }}
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -78,6 +160,45 @@ const MONTH_NAMES = [
 ]
 
 const BOOL_KEYS = ['bool1', 'bool2', 'bool3']
+
+// Escala de violetas para el calendario (índice 0 = sin personas). En UTC
+// para no arrastrar corrimientos de huso horario al sumar/restar días.
+const CALENDAR_COLORS_BY_THEME = {
+  // Nivel 4 bajado de #d8cdfa (casi blanco) a #a78bfa: sigue siendo el más
+  // claro/intenso de la escala, pero se lee como violeta y no como blanco.
+  dark: ['#2a2b31', '#3a2f66', '#5f46a1', '#826ac5', '#a288f0'],
+  light: ['#d8d8de', '#c3b3ec', '#957dda', '#6e54b4', '#4f4381']
+}
+
+// Fila 1-indexed dentro del grid de 7 filas (1=domingo ... 7=sábado). Solo
+// lun/mié/vie, como el calendario de GitHub, para no saturar el eje.
+const CALENDAR_DAY_LABELS = [
+  { row: 2, text: 'Lun' },
+  { row: 4, text: 'Mié' },
+  { row: 6, text: 'Vie' }
+]
+
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+function toUTCDate(year, month, day) {
+  return new Date(Date.UTC(year, month - 1, day))
+}
+
+function toISOFromUTC(date) {
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`
+}
+
+// Nivel 1-4 según en qué cuarto del máximo cae el conteo (0 personas = nivel 0).
+function levelFor(count, maxCount) {
+  if (count <= 0) return 0
+  const ratio = count / maxCount
+  if (ratio <= 0.25) return 1
+  if (ratio <= 0.5) return 2
+  if (ratio <= 0.75) return 3
+  return 4
+}
 
 function parseFecha(str) {
   const [year, month, day] = str.split('-').map(Number)
@@ -167,6 +288,7 @@ const FILTER_PREDICATES = {
   month: (p, value) => p.fecha && String(Number(p.fecha.slice(5, 7))) === value,
   day: (p, value) => p.fecha && String(Number(p.fecha.slice(8, 10))) === value,
   yearMonth: (p, value) => p.fecha && p.fecha.slice(0, 7) === value,
+  date: (p, value) => p.fecha === value,
   bool: (p, value) => !!p[value]
 }
 
@@ -175,6 +297,7 @@ const FILTER_LABELS = {
   month: 'Mes',
   day: 'Día del mes',
   yearMonth: 'Mes de cada año',
+  date: 'Fecha exacta',
   bool: 'Desglose'
 }
 
@@ -278,14 +401,150 @@ export default {
         this.desglosar,
         '#c05746'
       )
+    },
+    // Ancho mínimo para que cada barra tenga espacio legible (no se aplaste
+    // en mobile); el contenedor padre scrollea horizontalmente si esto supera
+    // el ancho visible en vez de comprimir las barras.
+    yearMonthChartWidth() {
+      return Math.max(280, (this.byYearMonthData.labels.length || 0) * 18)
+    },
+    calendarColors() {
+      return CALENDAR_COLORS_BY_THEME[themeState.value]
+    },
+    // Conteo por fecha completa (YYYY-MM-DD), reusado por calendarWeeks y por
+    // la leyenda (para calcular a qué rango de personas equivale cada color).
+    calendarCounts() {
+      const counts = {}
+      this.fechas.forEach((e) => {
+        const key = `${e.year}-${pad2(e.month)}-${pad2(e.day)}`
+        counts[key] = (counts[key] || 0) + 1
+      })
+      return counts
+    },
+    calendarMaxCount() {
+      return Math.max(1, ...Object.values(this.calendarCounts))
+    },
+    // Semanas completas (domingo a sábado) que cubren el rango real de fechas,
+    // con relleno antes/después marcado como level -1 (no se pinta, solo
+    // completa la grilla para que las semanas queden alineadas por columna).
+    calendarWeeks() {
+      if (!this.fechas.length) return []
+
+      const counts = this.calendarCounts
+      const times = this.fechas.map((e) => toUTCDate(e.year, e.month, e.day).getTime())
+      const minTime = Math.min(...times)
+      // Llega hasta hoy (no solo hasta la última fecha con datos), así se ve
+      // el hueco entre la última persona cargada y el día actual en vez de
+      // cortar el calendario justo ahí. Si hay una fecha futura cargada, esa
+      // sigue siendo el límite (Math.max se queda con la mayor de las dos).
+      const todayTime = (() => {
+        const now = new Date()
+        return toUTCDate(now.getFullYear(), now.getMonth() + 1, now.getDate()).getTime()
+      })()
+      const maxTime = Math.max(...times, todayTime)
+
+      const start = new Date(minTime)
+      start.setUTCDate(start.getUTCDate() - start.getUTCDay())
+      const end = new Date(maxTime)
+      end.setUTCDate(end.getUTCDate() + (6 - end.getUTCDay()))
+
+      const maxCount = this.calendarMaxCount
+
+      const weeks = []
+      const cursor = new Date(start)
+      while (cursor.getTime() <= end.getTime()) {
+        const week = []
+        for (let d = 0; d < 7; d++) {
+          const dateStr = toISOFromUTC(cursor)
+          const inRange = cursor.getTime() >= minTime && cursor.getTime() <= maxTime
+          const count = counts[dateStr] || 0
+          week.push({ date: dateStr, count, level: inRange ? levelFor(count, maxCount) : -1 })
+          cursor.setUTCDate(cursor.getUTCDate() + 1)
+        }
+        weeks.push(week)
+      }
+      return weeks
+    },
+    // El grid CSS (grid-auto-flow: column) llena columna por columna, así que
+    // necesita los días en orden semana-por-semana (7 seguidos = 1 columna).
+    calendarDays() {
+      return this.calendarWeeks.flat()
+    },
+    dayLabels() {
+      return CALENDAR_DAY_LABELS
+    },
+    // Un label por semana donde cambia el mes respecto a la semana anterior.
+    // Usa el primer día de la semana como referencia. El año va en un label
+    // aparte (calendarYearLabels, misma coordenada X) arriba de este.
+    calendarMonthLabels() {
+      const labels = []
+      let lastMonth = null
+      this.calendarWeeks.forEach((week, index) => {
+        const [, month] = week[0].date.split('-').map(Number)
+        if (month !== lastMonth) {
+          labels.push({ weekIndex: index, text: MONTH_NAMES[month - 1].slice(0, 3) })
+          lastMonth = month
+        }
+      })
+      return labels
+    },
+    // Un label por semana donde cambia el año respecto a la anterior (incluye
+    // la primera semana del rango, sea cual sea el mes en que arranquen los
+    // datos). Queda arriba del mes correspondiente (mismo weekIndex).
+    calendarYearLabels() {
+      const labels = []
+      let lastYear = null
+      this.calendarWeeks.forEach((week, index) => {
+        const [year] = week[0].date.split('-').map(Number)
+        if (year !== lastYear) {
+          labels.push({ weekIndex: index, text: String(year) })
+          lastYear = year
+        }
+      })
+      return labels
+    },
+    // Rango de personas que representa cada color, calculado recorriendo
+    // conteo por conteo con la misma levelFor() que colorea los cuadrados
+    // (así no se puede desincronizar el texto de la leyenda del color real).
+    calendarLegend() {
+      if (!this.fechas.length) return []
+      const max = this.calendarMaxCount
+      const byLevel = { 1: [], 2: [], 3: [], 4: [] }
+      for (let count = 1; count <= max; count++) {
+        byLevel[levelFor(count, max)].push(count)
+      }
+      const items = [{ level: 0, text: '0' }]
+      ;[1, 2, 3, 4].forEach((level) => {
+        const counts = byLevel[level]
+        if (!counts.length) return
+        const min = counts[0]
+        const maxOfLevel = counts[counts.length - 1]
+        items.push({
+          level,
+          text: min === maxOfLevel ? `${min}` : `${min}-${maxOfLevel}`
+        })
+      })
+      return items
     }
   },
   watch: {
     desglosar(value) {
       if (!value) this.clearFilter('bool')
+    },
+    // Recién cargan los datos (o cambian los filtros) de forma async, así que
+    // el ancho real del calendario no está listo hasta el siguiente tick.
+    calendarWeeks() {
+      this.$nextTick(this.scrollCalendarToEnd)
     }
   },
+  mounted() {
+    this.$nextTick(this.scrollCalendarToEnd)
+  },
   methods: {
+    scrollCalendarToEnd() {
+      const el = this.$refs.calendarScroll
+      if (el) el.scrollLeft = el.scrollWidth
+    },
     toggleFilter(field, value) {
       this.activeFilters = {
         ...this.activeFilters,
@@ -315,9 +574,10 @@ export default {
         event.native.target.style.cursor = elements.length ? 'pointer' : 'default'
       }
     },
-    chartOptionsFor(bucketField) {
+    chartOptionsFor(bucketField, overrides = {}) {
       return {
         ...this.chartOptions,
+        ...overrides,
         onClick: (evt, elements) => this.handleChartClick(bucketField, elements),
         onHover: this.handleChartHover
       }
@@ -347,5 +607,64 @@ export default {
 .filter-chip.active {
   background: #5D42A9;
   border-color: #5D42A9;
+}
+
+.calendar-day {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.calendar-day--empty {
+  cursor: default;
+}
+
+.calendar-day--active {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+}
+
+.calendar-legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* El scrollbar global (index.css) usa el fondo de la página (#131418) para
+   el track, más oscuro que la tarjeta de este gráfico (#1c1d22) — acá se
+   pisa solo para este scroller en particular, para que quede del mismo
+   color que la tarjeta en vez de destacarse. */
+.calendar-scroll::-webkit-scrollbar-track {
+  background: #1c1d22;
+}
+
+.calendar-scroll::-webkit-scrollbar-thumb {
+  border-color: #1c1d22;
+}
+
+.calendar-scroll::-webkit-scrollbar-corner {
+  background: #1c1d22;
+}
+
+.calendar-scroll {
+  scrollbar-color: #5D42A9 #1c1d22;
+}
+
+[data-theme='light'] .calendar-scroll::-webkit-scrollbar-track {
+  background: #faf6ec;
+}
+
+[data-theme='light'] .calendar-scroll::-webkit-scrollbar-thumb {
+  border-color: #faf6ec;
+}
+
+[data-theme='light'] .calendar-scroll::-webkit-scrollbar-corner {
+  background: #faf6ec;
+}
+
+[data-theme='light'] .calendar-scroll {
+  scrollbar-color: #9379CC #faf6ec;
 }
 </style>
