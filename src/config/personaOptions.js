@@ -246,7 +246,7 @@ export const LUGAR_COLORS = {
   'Hotel/AirBnB': '#416388',
   Cruising: '#46994a',
   Telo: '#be7654',
-  Auto: '#c54d5d',
+  Auto: '#b44151',
   Calle: '#888888',
   Otro: '#888888'
 }
