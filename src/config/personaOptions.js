@@ -231,19 +231,23 @@ export const LUGAR_OPTIONS = [
   'Casa ajena',
   'Casa propia',
   'Boliche/Joda',
+  'Hotel/AirBnB',
+  'Cruising',
+  'Telo',
   'Auto',
   'Calle',
-  'Hotel/AirBnB',
   'Otro'
 ]
 
 export const LUGAR_COLORS = {
-  'Casa ajena': '#5D42A9',
-  'Casa propia': '#8B6FD6',
-  'Boliche/Joda': '#2c7a7b',
-  Auto: '#c05746',
-  Calle: '#d4a017',
-  'Hotel/AirBnB': '#3b6ea5',
+  'Casa ajena': '#dbd81d',
+  'Casa propia': '#4452d6',
+  'Boliche/Joda': '#771ab4',
+  'Hotel/AirBnB': '#34577c',
+  Cruising: '#24aa2a',
+  Telo: '#c07346',
+  Auto: '#cc3434',
+  Calle: '#888888',
   Otro: '#888888'
 }
 
