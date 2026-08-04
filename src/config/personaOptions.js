@@ -240,13 +240,13 @@ export const LUGAR_OPTIONS = [
 ]
 
 export const LUGAR_COLORS = {
-  'Casa ajena': '#dbd81d',
-  'Casa propia': '#4452d6',
-  'Boliche/Joda': '#771ab4',
-  'Hotel/AirBnB': '#34577c',
-  Cruising: '#24aa2a',
-  Telo: '#c07346',
-  Auto: '#cc3434',
+  'Casa ajena': '#dbc442',
+  'Casa propia': '#5153d8',
+  'Boliche/Joda': '#8149a7',
+  'Hotel/AirBnB': '#416388',
+  Cruising: '#43a748',
+  Telo: '#be7654',
+  Auto: '#c54d5d',
   Calle: '#888888',
   Otro: '#888888'
 }
