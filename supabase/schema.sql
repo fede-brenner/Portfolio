@@ -63,3 +63,20 @@ alter table personas add column if not exists barrio_lng double precision;
 -- ============================================================
 
 alter table personas add column if not exists imagen_thumb_path text;
+
+-- ============================================================
+-- Rating de estrellas (0 a 5, en pasos de 1 estrella entera).
+-- ============================================================
+
+alter table personas add column if not exists rating smallint;
+
+-- Postgres no soporta "ADD CONSTRAINT IF NOT EXISTS", así que se chequea a mano.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'personas_rating_range'
+  ) then
+    alter table personas add constraint personas_rating_range
+      check (rating is null or (rating >= 0 and rating <= 5));
+  end if;
+end $$;

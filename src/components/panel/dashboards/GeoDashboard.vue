@@ -73,6 +73,7 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
 import { findCountryFeature } from '@/lib/geo'
@@ -152,7 +153,15 @@ function sortDesc(counts) {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])
 }
 
-function toBarData(sortedEntries, label, colorFor) {
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace('#', '')
+  const r = parseInt(clean.slice(0, 2), 16)
+  const g = parseInt(clean.slice(2, 4), 16)
+  const b = parseInt(clean.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+function toBarData(sortedEntries, label, colorFor, selectedKey = null) {
   const labels = sortedEntries.map(([l]) => l)
   return {
     labels,
@@ -160,10 +169,30 @@ function toBarData(sortedEntries, label, colorFor) {
       {
         label,
         data: sortedEntries.map(([, v]) => v),
-        backgroundColor: labels.map((l, i) => colorFor(l, i))
+        // Siempre devuelve un array (nunca alterna array/string entre
+        // renders, ver comentario en DateDashboard.vue) para que Chart.js no
+        // se quede con el color atenuado pegado al sacar el filtro.
+        backgroundColor: labels.map((l, i) => {
+          const base = colorFor(l, i)
+          return selectedKey == null || l === selectedKey ? base : hexToRgba(base, 0.25)
+        })
       }
     ]
   }
+}
+
+// El InfoWindow nativo de Google Maps reserva una fila propia arriba de todo
+// el globo para su botón de cerrar (48x48, con un título vacío al lado), lo
+// que deja un hueco grande antes del texto. En vez de ocultarlo y armar uno
+// propio (frágil: quedaban los dos superpuestos), se restylea ese botón
+// nativo por CSS para que sea chico y quede flotando sobre la esquina
+// superior derecha del texto — ver el bloque de reglas :deep(.gm-*) al
+// final del <style>. El contenido solo necesita el padding-right para no
+// quedar debajo suyo.
+function infoWindowContent(title, subtitle) {
+  return `<div style="color:#131418;padding-right:14px; margin-top: 5px; margin-bottom: 5px">
+    <strong>${title}</strong><br>${subtitle}
+  </div>`
 }
 
 // Alto en px para que cada barra tenga suficiente espacio y ninguna etiqueta
@@ -197,6 +226,7 @@ export default {
       countryDataLayer: null,
       bubbleMap: null,
       bubbleCircles: [],
+      bubbleInfoWindow: null,
       activeFilters: {}
     }
   },
@@ -228,19 +258,42 @@ export default {
       }))
     },
     filteredPersonas() {
-      let list = this.personas
-      Object.entries(this.activeFilters).forEach(([field, value]) => {
-        const getValue = FIELD_GETTERS[field]
-        list = list.filter((p) => getValue(p) === value)
-      })
-      return list
+      return this.personasExcluding(null)
+    },
+    // Personas para cada gráfico/mapa: aplican todos los filtros activos
+    // menos el suyo propio, así tocar un país/barrio/lugar filtra el resto
+    // del dashboard sin autofiltrarse.
+    paisPersonas() {
+      return this.personasExcluding('pais')
+    },
+    barrioPersonas() {
+      return this.personasExcluding('barrio')
+    },
+    lugarPersonas() {
+      return this.personasExcluding('lugar')
     },
     countryCounts() {
-      return countBy(this.filteredPersonas, (p) => p.pais)
+      return countBy(this.paisPersonas, (p) => p.pais)
+    },
+    // Promedio de rating por país, solo para mostrar en el tooltip del mapa
+    // (no afecta el color del choropleth, que sigue siendo por cantidad).
+    countryRatingAvg() {
+      const sums = {}
+      const counts = {}
+      this.paisPersonas.forEach((p) => {
+        if (p.rating == null || !p.pais) return
+        sums[p.pais] = (sums[p.pais] || 0) + p.rating
+        counts[p.pais] = (counts[p.pais] || 0) + 1
+      })
+      const avgs = {}
+      Object.keys(sums).forEach((pais) => {
+        avgs[pais] = sums[pais] / counts[pais]
+      })
+      return avgs
     },
     bubbleData() {
       const groups = {}
-      this.filteredPersonas.forEach((p) => {
+      this.barrioPersonas.forEach((p) => {
         if (p.barrio_lat == null || p.barrio_lng == null || !p.barrio) return
         const key = p.barrio
         if (!groups[key]) groups[key] = { longitude: p.barrio_lng, latitude: p.barrio_lat, value: 0, label: key }
@@ -249,16 +302,22 @@ export default {
       return Object.values(groups)
     },
     paisBarData() {
-      return toBarData(sortDesc(this.countryCounts).slice(0, 15), 'Pais', (l) => PAIS_COLORS[l] || '#888888')
+      return toBarData(
+        sortDesc(this.countryCounts).slice(0, 15),
+        'Pais',
+        (l) => PAIS_COLORS[l] || '#888888',
+        this.activeFilters.pais ?? null
+      )
     },
     paisChartHeight() {
       return chartHeightFor(this.paisBarData.labels.length)
     },
     barrioBarData() {
       return toBarData(
-        sortDesc(countBy(this.filteredPersonas, (p) => p.barrio)).slice(0, 25),
+        sortDesc(countBy(this.barrioPersonas, (p) => p.barrio)).slice(0, 25),
         'Barrio',
-        (_, i) => NEUTRAL_PALETTE[i % NEUTRAL_PALETTE.length]
+        (_, i) => NEUTRAL_PALETTE[i % NEUTRAL_PALETTE.length],
+        this.activeFilters.barrio ?? null
       )
     },
     barrioChartHeight() {
@@ -266,9 +325,10 @@ export default {
     },
     lugarBarData() {
       return toBarData(
-        sortDesc(countBy(this.filteredPersonas, (p) => p.lugar)),
+        sortDesc(countBy(this.lugarPersonas, (p) => p.lugar)),
         'Lugar',
-        (l) => LUGAR_COLORS[l] || '#888888'
+        (l) => LUGAR_COLORS[l] || '#888888',
+        this.activeFilters.lugar ?? null
       )
     },
     lugarChartHeight() {
@@ -302,6 +362,17 @@ export default {
     }
   },
   methods: {
+    // Aplica todos los activeFilters menos `excludeField` (null = todos).
+    // Cada gráfico/mapa usa esto con su propio field para no autofiltrarse.
+    personasExcluding(excludeField) {
+      let list = this.personas
+      Object.entries(this.activeFilters).forEach(([field, value]) => {
+        if (field === excludeField) return
+        const getValue = FIELD_GETTERS[field]
+        list = list.filter((p) => getValue(p) === value)
+      })
+      return list
+    },
     toggleFieldFilter(field, value) {
       if (this.activeFilters[field] === value) {
         this.clearFieldFilter(field)
@@ -339,11 +410,13 @@ export default {
 
       const entries = Object.entries(this.countryCounts)
       const maxValue = Math.max(1, ...entries.map(([, v]) => v))
+      const ratingAvgByPais = this.countryRatingAvg
       const features = entries
         .map(([nombre, value]) => {
           const feature = findCountryFeature(nombre)
           if (!feature) return null
-          return { ...feature, properties: { ...feature.properties, nombre, personas: value } }
+          const ratingAvg = ratingAvgByPais[nombre] ?? null
+          return { ...feature, properties: { ...feature.properties, nombre, personas: value, ratingAvg } }
         })
         .filter(Boolean)
 
@@ -367,18 +440,37 @@ export default {
           zoom: 2,
           minZoom: 1
         })
-        this.countryMap = map
+        // markRaw: si estas instancias de Google Maps quedan reactivas (Vue
+        // las envuelve en un Proxy al guardarlas en data()), las llamadas
+        // que las mutan internamente (setMap(null), remove(feature), etc.)
+        // se ejecutan sobre el Proxy en vez del objeto real. Google Maps usa
+        // estructuras internas atadas a la identidad exacta del objeto
+        // original, así que esas mutaciones quedan rotas en silencio — las
+        // altas seguían funcionando pero las bajas (borrar markers viejos)
+        // no, que era justo el síntoma reportado.
+        this.countryMap = markRaw(map)
 
         const data = new window.google.maps.Data({ map })
-        this.countryDataLayer = data
+        this.countryDataLayer = markRaw(data)
         this.updateCountryMapFeatures()
 
-        const infoWindow = new window.google.maps.InfoWindow()
+        // maxWidth marca dónde Google Maps recién empieza a envolver el
+        // texto; sin esto el ancho por defecto (algo angosto) hacía que el
+        // texto se envolviera y el propio InfoWindow le agregara scrollbars
+        // internas.
+        const infoWindow = markRaw(new window.google.maps.InfoWindow({ maxWidth: 240 }))
+        // 'closeclick' solo dispara con la "x" (o Esc), no al reemplazar el
+        // contenido por otro país clickeado — así que cerrar el recuadro
+        // también saca el filtro de país en vez de dejarlo pegado.
+        infoWindow.addListener('closeclick', () => this.clearFieldFilter('pais'))
         data.addListener('click', (event) => {
           const nombre = event.feature.getProperty('nombre')
           const personas = event.feature.getProperty('personas') || 0
+          const ratingAvg = event.feature.getProperty('ratingAvg')
+          const subtitle = `${personas} persona${personas === 1 ? '' : 's'}`
+            + (ratingAvg != null ? ` — ⭐ ${ratingAvg.toFixed(1)}` : '')
           infoWindow.setContent(
-            `<div style="color:#131418"><strong>${nombre}</strong><br>${personas} persona${personas === 1 ? '' : 's'}</div>`
+            infoWindowContent(nombre, subtitle)
           )
           infoWindow.setPosition(event.latLng)
           infoWindow.open(map)
@@ -393,17 +485,27 @@ export default {
 
       this.bubbleCircles.forEach((marker) => marker.setMap(null))
       this.bubbleCircles = []
+      // Se recreaba un InfoWindow nuevo en cada llamada (cada vez que
+      // cambiaba un filtro) sin cerrar el anterior: si había uno abierto
+      // apuntando a un marker que se acababa de eliminar arriba, quedaba
+      // flotando en el mapa. Ahora se reusa una sola instancia guardada en
+      // data() y se cierra explícitamente antes de reconstruir los markers.
+      this.bubbleInfoWindow?.close()
       if (!this.bubbleData.length) return
 
       const maxValue = Math.max(1, ...this.bubbleData.map((d) => d.value))
-      const bubbleInfoWindow = new window.google.maps.InfoWindow()
+      if (!this.bubbleInfoWindow) {
+        this.bubbleInfoWindow = markRaw(new window.google.maps.InfoWindow({ maxWidth: 240 }))
+        this.bubbleInfoWindow.addListener('closeclick', () => this.clearFieldFilter('barrio'))
+      }
+      const bubbleInfoWindow = this.bubbleInfoWindow
       this.bubbleCircles = this.bubbleData.map((d) => {
         const isSelected = this.activeFilters.barrio === d.label
         // Marker con ícono de símbolo en vez de Circle: el radio de Circle es en
         // metros (geográfico), así que a bajo zoom se vuelve invisible. El scale
         // de un Symbol es en píxeles de pantalla, así que la burbuja se ve del
         // mismo tamaño relativo sin importar cuánto zoom tengas.
-        const marker = new window.google.maps.Marker({
+        const marker = markRaw(new window.google.maps.Marker({
           map: this.bubbleMap,
           position: { lat: d.latitude, lng: d.longitude },
           icon: {
@@ -415,10 +517,10 @@ export default {
             strokeOpacity: 0.9,
             strokeWeight: 1
           }
-        })
+        }))
         marker.addListener('click', () => {
           bubbleInfoWindow.setContent(
-            `<div style="color:#131418"><strong>${d.label}</strong><br>${d.value} persona${d.value === 1 ? '' : 's'}</div>`
+            infoWindowContent(d.label, `${d.value} persona${d.value === 1 ? '' : 's'}`)
           )
           bubbleInfoWindow.open(this.bubbleMap, marker)
           this.toggleFieldFilter('barrio', d.label)
@@ -439,7 +541,7 @@ export default {
           zoom: 4,
           minZoom: 2
         })
-        this.bubbleMap = map
+        this.bubbleMap = markRaw(map)
         this.updateBubbleMarkers()
 
         if (this.bubbleData.length > 1) map.fitBounds(bounds)
@@ -484,5 +586,38 @@ export default {
 :deep(.gm-style-cc + div),
 :deep(div[style*="z-index: 1000001"]) {
   display: none !important;
+}
+
+/* El InfoWindow nativo reserva una fila propia (.gm-style-iw-chr, 48px) para
+   el botón de cerrar arriba de todo el globo, dejando un hueco grande antes
+   del texto — se saca de flujo (position:absolute) y se encoge el botón
+   para que quede flotando compacto en la esquina superior derecha, sobre el
+   texto, en vez de empujarlo hacia abajo. gm-style-iw-d fuerza overflow
+   hidden porque si no Google le agregaba scrollbars aunque el contenido
+   entrara de sobra en el ancho del globo. */
+:deep(.gm-style-iw-chr) {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  height: auto !important;
+}
+
+:deep(.gm-style-iw-ch) {
+  display: none !important;
+}
+
+:deep(.gm-ui-hover-effect) {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+:deep(.gm-ui-hover-effect > span) {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 4px !important;
+}
+
+:deep(.gm-style-iw-d) {
+  overflow: hidden !important;
 }
 </style>

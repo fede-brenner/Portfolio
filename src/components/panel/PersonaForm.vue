@@ -2,9 +2,6 @@
   <form class="text-white text-left" @submit.prevent="save">
     <h2 class="text-xl font-bold mb-4">{{ persona ? 'Editar persona' : 'Nueva persona' }}</h2>
 
-    <h3 class="text-xs font-bold text-[#8B6FD6] uppercase tracking-wide mb-2 pb-1 border-b border-[#2a2b31]">
-      Identidad
-    </h3>
     <div class="identidad-grid gap-x-4 gap-y-2 mb-3">
       <div class="identidad-image relative cursor-pointer group" @click="$refs.fileInput.click()">
         <img
@@ -135,6 +132,11 @@
       </div>
     </label>
 
+    <label class="flex flex-col text-sm mb-3">
+      ⭐ Rating
+      <StarRating v-model="form.rating" show-value size="lg" />
+    </label>
+
     <div class="flex gap-6 mb-3">
       <label class="flex items-center gap-2 text-sm">
         <ToggleSwitch v-model="form.bool1" />
@@ -180,6 +182,7 @@ import SearchableSelect from './SearchableSelect.vue'
 import BarrioSelect from './BarrioSelect.vue'
 import ToggleSwitch from './ToggleSwitch.vue'
 import IconToggle from './IconToggle.vue'
+import StarRating from './StarRating.vue'
 import InstagramIcon from './icons/InstagramIcon.vue'
 import {
   PAIS_OPTIONS,
@@ -220,6 +223,7 @@ function emptyForm() {
     lugar: '',
     posicion: '',
     visual: '',
+    rating: 0,
     bool1: true,
     bool2: false,
     bool3: false
@@ -228,14 +232,19 @@ function emptyForm() {
 
 export default {
   name: 'PersonaForm',
-  components: { SearchableSelect, BarrioSelect, ToggleSwitch, IconToggle, InstagramIcon },
+  components: { SearchableSelect, BarrioSelect, ToggleSwitch, IconToggle, StarRating, InstagramIcon },
   props: {
     persona: { type: Object, default: null }
   },
   emits: ['saved', 'cancel'],
   data() {
     return {
-      form: this.persona ? { ...emptyForm(), ...this.persona } : emptyForm(),
+      // rating puede venir null desde la DB (personas viejas, sin rating
+      // cargado); StarRating espera un Number, así que se normaliza a 0 acá
+      // en vez de dejar que el spread de abajo pise el default de emptyForm().
+      form: this.persona
+        ? { ...emptyForm(), ...this.persona, rating: this.persona.rating || 0 }
+        : emptyForm(),
       imageFile: null,
       previewUrl: this.persona?.imagen_signed_url || null,
       saving: false,
@@ -306,7 +315,8 @@ export default {
           bool3: !!this.form.bool3,
           lugar: this.form.lugar || null,
           posicion: this.form.posicion || null,
-          visual: this.form.visual || null
+          visual: this.form.visual || null,
+          rating: this.form.rating || null
         }
 
         const query = this.persona

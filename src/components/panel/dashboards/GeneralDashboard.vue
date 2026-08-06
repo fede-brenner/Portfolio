@@ -109,6 +109,14 @@
         <Bar :data="topNamesBarData" :options="barOptionsFor('nombre')" />
       </div>
     </div>
+
+    <div class="bg-[#1c1d22] rounded p-4 pixel-corners">
+      <h3 class="text-sm font-bold mb-2 text-[#888888] uppercase">
+        Rating
+        <span v-if="selectedYear" class="normal-case font-normal text-[#8B6FD6]"> — {{ selectedYear }}</span>
+      </h3>
+      <Bar :data="ratingBarData" :options="verticalBarOptionsFor('rating')" />
+    </div>
   </div>
 </template>
 
@@ -153,20 +161,38 @@ function sortDesc(counts) {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])
 }
 
-function toPieData(sortedEntries, colorFor) {
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace('#', '')
+  const r = parseInt(clean.slice(0, 2), 16)
+  const g = parseInt(clean.slice(2, 4), 16)
+  const b = parseInt(clean.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// Siempre devuelve un array (nunca alterna array/string entre renders, ver
+// comentario en DateDashboard.vue) para que Chart.js no se quede con el
+// color atenuado pegado al sacar el filtro.
+function colorsFor(labels, colorFor, selectedKey) {
+  return labels.map((l, i) => {
+    const base = colorFor?.(l) || PALETTE[i % PALETTE.length]
+    return selectedKey == null || l === selectedKey ? base : hexToRgba(base, 0.25)
+  })
+}
+
+function toPieData(sortedEntries, colorFor, selectedKey = null) {
   const labels = sortedEntries.map(([l]) => l)
   return {
     labels,
     datasets: [
       {
         data: sortedEntries.map(([, v]) => v),
-        backgroundColor: labels.map((l, i) => colorFor?.(l) || PALETTE[i % PALETTE.length])
+        backgroundColor: colorsFor(labels, colorFor, selectedKey)
       }
     ]
   }
 }
 
-function toBarData(sortedEntries, label, colorFor) {
+function toBarData(sortedEntries, label, colorFor, selectedKey = null) {
   const labels = sortedEntries.map(([l]) => l)
   return {
     labels,
@@ -174,7 +200,7 @@ function toBarData(sortedEntries, label, colorFor) {
       {
         label,
         data: sortedEntries.map(([, v]) => v),
-        backgroundColor: labels.map((l, i) => colorFor?.(l) || PALETTE[i % PALETTE.length])
+        backgroundColor: colorsFor(labels, colorFor, selectedKey)
       }
     ]
   }
@@ -204,7 +230,8 @@ const FIELD_GETTERS = {
   colorPelo: (p) => p.color_pelo || 'Sin dato',
   queSeHizo: queSeHizoCategoria,
   visual: (p) => p.visual || 'Sin dato',
-  nombre: (p) => p.nombre || 'Sin dato'
+  nombre: (p) => p.nombre || 'Sin dato',
+  rating: (p) => (p.rating != null ? String(p.rating) : null)
 }
 
 const FIELD_LABELS = {
@@ -212,7 +239,20 @@ const FIELD_LABELS = {
   colorPelo: 'Color de pelo',
   queSeHizo: 'Qué se hizo',
   visual: 'Visual',
-  nombre: 'Nombre'
+  nombre: 'Nombre',
+  rating: 'Rating'
+}
+
+// A diferencia de las otras barras (ordenadas por cantidad), el rating tiene
+// un orden natural 0-5 que tiene más sentido mantener en el eje.
+function ratingBuckets(personas) {
+  const counts = {}
+  personas.forEach((p) => {
+    if (p.rating == null) return
+    counts[p.rating] = (counts[p.rating] || 0) + 1
+  })
+  const labels = ['0', '1', '2', '3', '4', '5']
+  return labels.map((l) => [l, counts[l] || 0])
 }
 
 export default {
@@ -250,6 +290,19 @@ export default {
         }
       }
     },
+    // A diferencia de horizontalBarOptions (usada para rankings tipo top
+    // nombres), el rating va vertical con categorías fijas 0-5 en el eje x.
+    verticalBarOptions() {
+      const colors = CHART_COLORS[themeState.value]
+      return {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: colors.text }, grid: { color: colors.grid } },
+          y: { ticks: { color: colors.text }, grid: { color: colors.grid }, beginAtZero: true }
+        }
+      }
+    },
     activeFilterChips() {
       return Object.entries(this.activeFilters).map(([field, value]) => ({
         field,
@@ -258,46 +311,66 @@ export default {
       }))
     },
     filteredPersonas() {
-      let list = this.personas
-      if (this.selectedYear) {
-        list = list.filter((p) => p.fecha && Number(p.fecha.slice(0, 4)) === this.selectedYear)
-      }
-      Object.entries(this.activeFilters).forEach(([field, value]) => {
-        const getValue = FIELD_GETTERS[field]
-        list = list.filter((p) => getValue(p) === value)
-      })
-      return list
+      return this.personasExcluding(null)
+    },
+    // Personas para cada gráfico: aplican todos los filtros activos menos el
+    // suyo propio, así tocar un sector/barra filtra el resto del dashboard
+    // sin autofiltrarse.
+    posicionPersonas() {
+      return this.personasExcluding('posicion')
+    },
+    colorPeloPersonas() {
+      return this.personasExcluding('colorPelo')
+    },
+    queSeHizoPersonas() {
+      return this.personasExcluding('queSeHizo')
+    },
+    visualPersonas() {
+      return this.personasExcluding('visual')
+    },
+    nombrePersonas() {
+      return this.personasExcluding('nombre')
+    },
+    ratingPersonas() {
+      return this.personasExcluding('rating')
     },
     posicionPieData() {
       return toPieData(
-        sortDesc(countBy(this.filteredPersonas, (p) => p.posicion)),
-        (l) => POSICION_COLORS[l]
+        sortDesc(countBy(this.posicionPersonas, (p) => p.posicion)),
+        (l) => POSICION_COLORS[l],
+        this.activeFilters.posicion ?? null
       )
     },
     colorPeloPieData() {
       return toPieData(
-        sortDesc(countBy(this.filteredPersonas, (p) => p.color_pelo)),
-        (l) => COLOR_PELO_COLORS[l]
+        sortDesc(countBy(this.colorPeloPersonas, (p) => p.color_pelo)),
+        (l) => COLOR_PELO_COLORS[l],
+        this.activeFilters.colorPelo ?? null
       )
     },
     queSeHizoPieData() {
       return toPieData(
-        sortDesc(countBy(this.filteredPersonas, queSeHizoCategoria)),
-        (l) => QUE_SE_HIZO_COLORS[l]
+        sortDesc(countBy(this.queSeHizoPersonas, queSeHizoCategoria)),
+        (l) => QUE_SE_HIZO_COLORS[l],
+        this.activeFilters.queSeHizo ?? null
       )
     },
     visualPieData() {
       return toPieData(
-        sortDesc(countBy(this.filteredPersonas, (p) => p.visual)),
-        (l) => VISUAL_COLORS[l]
+        sortDesc(countBy(this.visualPersonas, (p) => p.visual)),
+        (l) => VISUAL_COLORS[l],
+        this.activeFilters.visual ?? null
       )
     },
     topNamesBarData() {
-      const sorted = sortDesc(countBy(this.filteredPersonas, (p) => p.nombre)).slice(0, 20)
-      return toBarData(sorted, 'Personas')
+      const sorted = sortDesc(countBy(this.nombrePersonas, (p) => p.nombre)).slice(0, 20)
+      return toBarData(sorted, 'Personas', null, this.activeFilters.nombre ?? null)
     },
     topNamesChartHeight() {
       return chartHeightFor(this.topNamesBarData.labels.length)
+    },
+    ratingBarData() {
+      return toBarData(ratingBuckets(this.ratingPersonas), 'Personas', () => '#d4a017', this.activeFilters.rating ?? null)
     },
     perYearRows() {
       const counts = countBy(
@@ -310,6 +383,21 @@ export default {
     }
   },
   methods: {
+    // Aplica selectedYear + todos los activeFilters menos `excludeField`
+    // (null = todos). Cada gráfico usa esto con su propio field para no
+    // autofiltrarse.
+    personasExcluding(excludeField) {
+      let list = this.personas
+      if (this.selectedYear) {
+        list = list.filter((p) => p.fecha && Number(p.fecha.slice(0, 4)) === this.selectedYear)
+      }
+      Object.entries(this.activeFilters).forEach(([field, value]) => {
+        if (field === excludeField) return
+        const getValue = FIELD_GETTERS[field]
+        list = list.filter((p) => getValue(p) === value)
+      })
+      return list
+    },
     toggleYearFilter(year) {
       this.selectedYear = this.selectedYear === year ? null : year
     },
@@ -345,6 +433,13 @@ export default {
     barOptionsFor(field) {
       return {
         ...this.horizontalBarOptions,
+        onClick: (evt, elements, chart) => this.handleChartClick(field, chart, elements),
+        onHover: this.handleChartHover
+      }
+    },
+    verticalBarOptionsFor(field) {
+      return {
+        ...this.verticalBarOptions,
         onClick: (evt, elements, chart) => this.handleChartClick(field, chart, elements),
         onHover: this.handleChartHover
       }

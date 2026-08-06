@@ -27,8 +27,10 @@
           <span v-if="selectedYear" class="normal-case font-normal text-[#8B6FD6]"> — {{ selectedYear }}</span>
         </h3>
         <p class="text-sm text-[#888888]">
-          Promedio: <strong class="text-white">{{ ageStats.avg }}</strong> —
-          Mediana: <strong class="text-white">{{ ageStats.median }}</strong>
+          <span class="md:hidden">Prom.</span><span class="hidden md:inline">Promedio</span>:
+          <strong class="text-white">{{ ageStats.avg }}</strong> —
+          <span class="md:hidden">Med.</span><span class="hidden md:inline">Mediana</span>:
+          <strong class="text-white">{{ ageStats.median }}</strong>
         </p>
       </div>
       <p class="text-xs text-[#888888] mb-2">Tocá una barra para filtrar el resto del dashboard.</p>
@@ -42,8 +44,10 @@
           <span v-if="selectedYear" class="normal-case font-normal text-[#8B6FD6]"> — {{ selectedYear }}</span>
         </h3>
         <p class="text-sm text-[#888888]">
-          Promedio: <strong class="text-white">{{ updatedAgeStats.avg }}</strong> —
-          Mediana: <strong class="text-white">{{ updatedAgeStats.median }}</strong>
+          <span class="md:hidden">Prom.</span><span class="hidden md:inline">Promedio</span>:
+          <strong class="text-white">{{ updatedAgeStats.avg }}</strong> —
+          <span class="md:hidden">Med.</span><span class="hidden md:inline">Mediana</span>:
+          <strong class="text-white">{{ updatedAgeStats.median }}</strong>
         </p>
       </div>
       <p class="text-xs text-[#888888] mb-2">Tocá una barra para filtrar el resto del dashboard.</p>
@@ -72,6 +76,7 @@
               <th class="py-2 pr-3">Mi edad</th>
               <th class="py-2 pr-3">Dif. vs promedio</th>
               <th class="py-2 pr-3">Dif. vs mediana</th>
+              <th class="py-2 pr-3">⭐ Rating prom.</th>
             </tr>
           </thead>
           <tbody>
@@ -88,6 +93,7 @@
               <td class="py-2 pr-3">{{ row.myAge }}</td>
               <td class="py-2 pr-3" :class="diffBgClass(row.diffAvg)">{{ formatDiff(row.diffAvg) }}</td>
               <td class="py-2 pr-3" :class="diffBgClass(row.diffMedian)">{{ formatDiff(row.diffMedian) }}</td>
+              <td class="py-2 pr-3">{{ row.ratingAvg ?? '—' }}</td>
             </tr>
           </tbody>
         </table>
@@ -168,17 +174,33 @@ function countByValue(values) {
   return counts
 }
 
-function toBarChartData(counts) {
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace('#', '')
+  const r = parseInt(clean.slice(0, 2), 16)
+  const g = parseInt(clean.slice(2, 4), 16)
+  const b = parseInt(clean.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// Siempre devuelve un array (nunca alterna array/string entre renders, ver
+// comentario en DateDashboard.vue) para que Chart.js no se quede con el
+// color atenuado pegado al sacar el filtro.
+function colorsFor(labels, color, selectedKey) {
+  return labels.map((l) => (selectedKey == null || l === selectedKey ? color : hexToRgba(color, 0.25)))
+}
+
+function toBarChartData(counts, selectedKey = null) {
   const labels = Object.keys(counts)
     .map(Number)
     .sort((a, b) => a - b)
+    .map(String)
   return {
-    labels: labels.map(String),
+    labels,
     datasets: [
       {
         label: 'Personas',
         data: labels.map((l) => counts[l]),
-        backgroundColor: '#5D42A9'
+        backgroundColor: colorsFor(labels, '#5D42A9', selectedKey)
       }
     ]
   }
@@ -193,7 +215,8 @@ export default {
   data() {
     return {
       selectedYear: null,
-      activeFilters: {}
+      activeFilters: {},
+      isDesktop: true
     }
   },
   computed: {
@@ -201,6 +224,11 @@ export default {
       const colors = CHART_COLORS[themeState.value]
       return {
         responsive: true,
+        // Chart.js usa aspectRatio 2 (ancho:alto) por defecto para Bar. El
+        // 35% menos alto pedido es solo para desktop (ver mql en
+        // mounted/beforeUnmount) — en mobile se deja el ratio normal, si no
+        // el gráfico queda demasiado achatado en pantallas angostas.
+        aspectRatio: this.isDesktop ? 2 / 0.65 : 2,
         plugins: { legend: { display: false } },
         scales: {
           x: { ticks: { color: colors.text }, grid: { color: colors.grid } },
@@ -216,30 +244,29 @@ export default {
       }))
     },
     filteredPersonas() {
-      let list = this.personas
-      if (this.selectedYear) {
-        list = list.filter(
-          (p) => p.fecha && Number(p.fecha.slice(0, 4)) === this.selectedYear
-        )
-      }
-      Object.entries(this.activeFilters).forEach(([field, value]) => {
-        const getValue = FIELD_GETTERS[field]
-        list = list.filter((p) => getValue(p) === value)
-      })
-      return list
+      return this.personasExcluding(null)
+    },
+    // Personas para el gráfico de "edad": aplica todos los filtros activos
+    // menos el suyo propio, así tocar una barra filtra el resto del
+    // dashboard sin autofiltrarse (se seguiría viendo solo la barra tocada).
+    agePersonas() {
+      return this.personasExcluding('edad')
+    },
+    updatedAgePersonas() {
+      return this.personasExcluding('updatedEdad')
     },
     ages() {
-      return this.filteredPersonas.map((p) => p.edad).filter((e) => e != null)
+      return this.agePersonas.map((p) => p.edad).filter((e) => e != null)
     },
     ageStats() {
       return { avg: round1(average(this.ages)), median: round1(median(this.ages)) }
     },
     ageChartData() {
-      return toBarChartData(countByValue(this.ages))
+      return toBarChartData(countByValue(this.ages), this.activeFilters.edad ?? null)
     },
     updatedAges() {
       const today = new Date()
-      return this.filteredPersonas
+      return this.updatedAgePersonas
         .filter((p) => p.edad != null && p.fecha)
         .map((p) => p.edad + fullYearsSince(p.fecha, today))
     },
@@ -247,21 +274,26 @@ export default {
       return { avg: round1(average(this.updatedAges)), median: round1(median(this.updatedAges)) }
     },
     updatedAgeChartData() {
-      return toBarChartData(countByValue(this.updatedAges))
+      return toBarChartData(countByValue(this.updatedAges), this.activeFilters.updatedEdad ?? null)
     },
     perYearRows() {
-      let base = this.personas
-      Object.entries(this.activeFilters).forEach(([field, value]) => {
-        const getValue = FIELD_GETTERS[field]
-        base = base.filter((p) => getValue(p) === value)
-      })
+      // La tabla por año no depende de selectedYear (es su propio filtro),
+      // pero sí de los filtros de los gráficos de edad de arriba.
+      const base = this.personasExcluding(null, { skipYear: true })
 
       const byYear = {}
+      const ratingsByYear = {}
       base.forEach((p) => {
         if (p.edad == null || !p.fecha) return
         const year = Number(p.fecha.slice(0, 4))
         if (!byYear[year]) byYear[year] = []
         byYear[year].push(p.edad)
+        // El rating se junta en un acumulador aparte porque no toda persona
+        // con edad tiene rating cargado (average()/median() ya filtran null).
+        if (p.rating != null) {
+          if (!ratingsByYear[year]) ratingsByYear[year] = []
+          ratingsByYear[year].push(p.rating)
+        }
       })
 
       return Object.keys(byYear)
@@ -276,13 +308,42 @@ export default {
             avg: round1(avg),
             median: round1(med),
             myAge,
+            ratingAvg: round1(average(ratingsByYear[year] || [])),
             diffAvg: avg == null ? null : avg - myAge,
             diffMedian: med == null ? null : med - myAge
           }
         })
     }
   },
+  mounted() {
+    // Mismo breakpoint que el "md" de Tailwind, usado en el resto del panel.
+    this.desktopMql = window.matchMedia('(min-width: 768px)')
+    this.isDesktop = this.desktopMql.matches
+    this.desktopMql.addEventListener('change', this.handleDesktopChange)
+  },
+  beforeUnmount() {
+    this.desktopMql?.removeEventListener('change', this.handleDesktopChange)
+  },
   methods: {
+    handleDesktopChange(event) {
+      this.isDesktop = event.matches
+    },
+    // Aplica selectedYear + todos los activeFilters menos `excludeField`
+    // (null = todos). Cada gráfico usa esto con su propio field para no
+    // autofiltrarse; la tabla por año pasa skipYear para no autofiltrarse
+    // tampoco respecto de selectedYear.
+    personasExcluding(excludeField, { skipYear = false } = {}) {
+      let list = this.personas
+      if (!skipYear && this.selectedYear) {
+        list = list.filter((p) => p.fecha && Number(p.fecha.slice(0, 4)) === this.selectedYear)
+      }
+      Object.entries(this.activeFilters).forEach(([field, value]) => {
+        if (field === excludeField) return
+        const getValue = FIELD_GETTERS[field]
+        list = list.filter((p) => getValue(p) === value)
+      })
+      return list
+    },
     toggleYearFilter(year) {
       this.selectedYear = this.selectedYear === year ? null : year
     },

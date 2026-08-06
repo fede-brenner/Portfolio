@@ -1,20 +1,20 @@
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex items-center gap-2">
-      <ToggleSwitch v-model="desglosar" />
-      <span class="text-sm text-[#888888]">
-        Desglosar por {{ boolLabels.bool1 }} / {{ boolLabels.bool2 }} / {{ boolLabels.bool3 }}
-      </span>
-    </div>
-
-    <div v-if="activeFilterChips.length" class="bg-[#1c1d22] rounded p-4 pixel-corners">
-      <div class="flex justify-between items-baseline mb-2">
-        <h3 class="text-sm font-bold text-[#888888] uppercase">Filtros activos</h3>
-        <button class="text-xs text-[#8B6FD6] hover:underline" @click="clearAllFilters">
+    <div class="bg-[#1c1d22] rounded p-4 pixel-corners flex flex-col gap-3">
+      <div class="flex justify-between items-baseline">
+        <h3 class="text-sm font-bold text-[#888888] uppercase">
+          Filtros activos ({{ activeFilterChips.length }})
+        </h3>
+        <button
+          v-if="activeFilterChips.length"
+          class="text-xs text-[#8B6FD6] hover:underline"
+          @click="clearAllFilters"
+        >
           Quitar todos
         </button>
       </div>
-      <div class="flex flex-wrap gap-2">
+
+      <div v-if="activeFilterChips.length" class="flex flex-wrap gap-2">
         <button
           v-for="chip in activeFilterChips"
           :key="chip.field"
@@ -25,11 +25,18 @@
           {{ chip.label }}: {{ chip.display }} ✕
         </button>
       </div>
-    </div>
 
-    <p class="text-xs text-[#888888] -mt-4">
-      Tocá una barra para filtrar el resto de los gráficos.
-    </p>
+      <p v-if="!activeFilterChips.length" class="text-xs text-[#888888] mt-2 mb-3 text-start">
+        Tocá una barra para filtrar el resto de los gráficos.
+      </p>
+
+      <div class="flex items-center gap-2">
+        <ToggleSwitch v-model="desglosar" />
+        <span class="text-sm text-[#888888]">
+          Desglosar por {{ boolLabels.bool1 }} / {{ boolLabels.bool2 }} / {{ boolLabels.bool3 }}
+        </span>
+      </div>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="bg-[#1c1d22] rounded p-4 pixel-corners">
@@ -115,17 +122,16 @@
                 v-for="day in calendarDays"
                 :key="day.date"
                 class="calendar-day"
-                :class="{ 'calendar-day--empty': day.level < 0, 'calendar-day--active': activeFilters.date === day.date }"
+                :class="{ 'calendar-day--empty': day.level < 0 }"
                 :style="{ backgroundColor: day.level < 0 ? 'transparent' : calendarColors[day.level] }"
                 :title="day.level < 0 ? '' : `${day.date}: ${day.count} persona${day.count === 1 ? '' : 's'}`"
-                @click="day.level >= 0 && toggleFilter('date', day.date)"
               ></span>
             </div>
           </div>
         </div>
       </div>
       <p class="text-xs text-[#888888] mt-2">
-        Cada cuadrado es un día; cuanto más violeta, más personas en esa fecha. Tocá un día para filtrar.
+        Cada cuadrado es un día; cuanto más violeta, más personas en esa fecha. Se adapta a los filtros de los otros gráficos.
       </p>
       <div class="flex flex-wrap gap-3 mt-2">
         <div v-for="item in calendarLegend" :key="item.level" class="flex items-center gap-1.5 text-xs text-[#888888]">
@@ -246,7 +252,27 @@ function yearMonthBuckets(entries) {
   return { keys, labels: keys }
 }
 
-function buildChartData(bucket, entries, keyFor, desglosar, color) {
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace('#', '')
+  const r = parseInt(clean.slice(0, 2), 16)
+  const g = parseInt(clean.slice(2, 4), 16)
+  const b = parseInt(clean.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// Si selectedKey no es null, la barra que coincide se muestra con el color
+// pleno y el resto se atenúa (alpha baja) para marcar visualmente cuál está
+// seleccionada sin necesidad de filtrar el propio gráfico. Devuelve siempre
+// un array (nunca alterna array/string entre renders): Chart.js reutiliza
+// las opciones resueltas por elemento entre updates, y alternar la forma del
+// dato (string vs array) es lo que hacía que, al sacar el filtro, las barras
+// atenuadas se quedaran pegadas en su color anterior en vez de volver todas
+// al tono normal.
+function colorsFor(keys, color, selectedKey) {
+  return keys.map((k) => (selectedKey == null || k === selectedKey ? color : hexToRgba(color, 0.25)))
+}
+
+function buildChartData(bucket, entries, keyFor, desglosar, color, selectedKey = null) {
   const { keys, labels } = bucket
   if (!keys.length) return { labels: [], datasets: [], keys: [] }
 
@@ -259,7 +285,11 @@ function buildChartData(bucket, entries, keyFor, desglosar, color) {
     return {
       labels,
       keys,
-      datasets: [{ label: 'Personas', data: keys.map((k) => counts[k] || 0), backgroundColor: color }]
+      datasets: [{
+        label: 'Personas',
+        data: keys.map((k) => counts[k] || 0),
+        backgroundColor: colorsFor(keys, color, selectedKey)
+      }]
     }
   }
 
@@ -276,7 +306,7 @@ function buildChartData(bucket, entries, keyFor, desglosar, color) {
     datasets: BOOL_KEYS.map((bk) => ({
       label: BOOL_LABELS[bk],
       data: keys.map((k) => counts[bk][k] || 0),
-      backgroundColor: BOOL_COLORS[bk]
+      backgroundColor: colorsFor(keys, BOOL_COLORS[bk], selectedKey)
     }))
   }
 }
@@ -354,52 +384,68 @@ export default {
         }))
     },
     filteredPersonas() {
-      let list = this.personas
-      Object.entries(this.activeFilters).forEach(([field, value]) => {
-        if (value == null) return
-        list = list.filter((p) => FILTER_PREDICATES[field](p, value))
-      })
-      return list
+      return this.personasExcluding(null)
     },
     fechas() {
-      return this.filteredPersonas
-        .filter((p) => p.fecha)
-        .map((p) => ({ ...parseFecha(p.fecha), persona: p }))
+      return this.fechasExcluding(null)
+    },
+    // Fechas para cada gráfico en particular: aplican todos los filtros
+    // activos MENOS el propio del gráfico, así tocar una barra filtra el
+    // resto de los gráficos pero no se autofiltra (se seguiría viendo solo
+    // la opción tocada, sin poder ver ni destocar el resto de las barras).
+    fechasByYear() {
+      return this.fechasExcluding('year')
+    },
+    fechasByMonth() {
+      return this.fechasExcluding('month')
+    },
+    fechasByDay() {
+      return this.fechasExcluding('day')
+    },
+    fechasByYearMonth() {
+      return this.fechasExcluding('yearMonth')
+    },
+    fechasByDate() {
+      return this.fechasExcluding('date')
     },
     byYearData() {
       return buildChartData(
-        yearBuckets(this.fechas),
-        this.fechas,
+        yearBuckets(this.fechasByYear),
+        this.fechasByYear,
         (e) => String(e.year),
         this.desglosar,
-        '#5D42A9'
+        '#5D42A9',
+        this.activeFilters.year ?? null
       )
     },
     byMonthData() {
       return buildChartData(
         monthBuckets(),
-        this.fechas,
+        this.fechasByMonth,
         (e) => String(e.month),
         this.desglosar,
-        '#8B6FD6'
+        '#8B6FD6',
+        this.activeFilters.month ?? null
       )
     },
     byDayOfMonthData() {
       return buildChartData(
         dayOfMonthBuckets(),
-        this.fechas,
+        this.fechasByDay,
         (e) => String(e.day),
         this.desglosar,
-        '#2c7a7b'
+        '#2c7a7b',
+        this.activeFilters.day ?? null
       )
     },
     byYearMonthData() {
       return buildChartData(
-        yearMonthBuckets(this.fechas),
-        this.fechas,
+        yearMonthBuckets(this.fechasByYearMonth),
+        this.fechasByYearMonth,
         (e) => `${e.year}-${String(e.month).padStart(2, '0')}`,
         this.desglosar,
-        '#c05746'
+        '#c05746',
+        this.activeFilters.yearMonth ?? null
       )
     },
     // Ancho mínimo para que cada barra tenga espacio legible (no se aplaste
@@ -415,7 +461,7 @@ export default {
     // la leyenda (para calcular a qué rango de personas equivale cada color).
     calendarCounts() {
       const counts = {}
-      this.fechas.forEach((e) => {
+      this.fechasByDate.forEach((e) => {
         const key = `${e.year}-${pad2(e.month)}-${pad2(e.day)}`
         counts[key] = (counts[key] || 0) + 1
       })
@@ -428,10 +474,10 @@ export default {
     // con relleno antes/después marcado como level -1 (no se pinta, solo
     // completa la grilla para que las semanas queden alineadas por columna).
     calendarWeeks() {
-      if (!this.fechas.length) return []
+      if (!this.fechasByDate.length) return []
 
       const counts = this.calendarCounts
-      const times = this.fechas.map((e) => toUTCDate(e.year, e.month, e.day).getTime())
+      const times = this.fechasByDate.map((e) => toUTCDate(e.year, e.month, e.day).getTime())
       const minTime = Math.min(...times)
       // Llega hasta hoy (no solo hasta la última fecha con datos), así se ve
       // el hueco entre la última persona cargada y el día actual en vez de
@@ -507,7 +553,7 @@ export default {
     // conteo por conteo con la misma levelFor() que colorea los cuadrados
     // (así no se puede desincronizar el texto de la leyenda del color real).
     calendarLegend() {
-      if (!this.fechas.length) return []
+      if (!this.fechasByDate.length) return []
       const max = this.calendarMaxCount
       const byLevel = { 1: [], 2: [], 3: [], 4: [] }
       for (let count = 1; count <= max; count++) {
@@ -541,6 +587,22 @@ export default {
     this.$nextTick(this.scrollCalendarToEnd)
   },
   methods: {
+    // Aplica todos los filtros activos menos `excludeField` (null = todos).
+    // Cada gráfico usa esto con su propio field para no autofiltrarse.
+    personasExcluding(excludeField) {
+      let list = this.personas
+      Object.entries(this.activeFilters).forEach(([field, value]) => {
+        if (value == null) return
+        if (field === excludeField) return
+        list = list.filter((p) => FILTER_PREDICATES[field](p, value))
+      })
+      return list
+    },
+    fechasExcluding(excludeField) {
+      return this.personasExcluding(excludeField)
+        .filter((p) => p.fecha)
+        .map((p) => ({ ...parseFecha(p.fecha), persona: p }))
+    },
     scrollCalendarToEnd() {
       const el = this.$refs.calendarScroll
       if (el) el.scrollLeft = el.scrollWidth
@@ -613,16 +675,6 @@ export default {
   width: 12px;
   height: 12px;
   border-radius: 2px;
-  cursor: pointer;
-}
-
-.calendar-day--empty {
-  cursor: default;
-}
-
-.calendar-day--active {
-  outline: 2px solid #ffffff;
-  outline-offset: 1px;
 }
 
 .calendar-legend-swatch {
